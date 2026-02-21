@@ -118,6 +118,24 @@
       border:1px dashed rgba(255,255,255,.18);
       border-radius: 16px;
     }
+    .hint strong{ color: var(--text); }
+    .hint .stateLine{ display:flex; gap:8px; align-items:center; margin-top:10px; }
+    .stateBadge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      font-weight: 800;
+      color: var(--text);
+      font-size: 12px;
+      letter-spacing:.2px;
+    }
+    .stateBadge .miniDot{ width:7px; height:7px; border-radius:99px; background: rgba(255,255,255,.35); }
+    .stateBadge.live .miniDot{ background: var(--good); }
+    .stateBadge.cancelled .miniDot{ background: var(--bad); }
+    .stateBadge.scheduled .miniDot{ background: rgba(255,255,255,.55); }
+    .stateBadge.idle .miniDot{ background: rgba(255,255,255,.35); }
 
     .form{
       display:grid;
@@ -273,12 +291,12 @@
       display:flex;
       flex-direction:column;
       gap: 8px;
-      align-items:center; /* centered as requested */
+      align-items:center; /* centered */
       justify-content:flex-start;
     }
     .setItem{
       width: 100%;
-      max-width: 220px;
+      max-width: 260px;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -316,6 +334,7 @@
     .cbtn.orange{ border-color: rgba(255,154,60,.45); background: rgba(255,154,60,.15); }
     .cbtn.warn{ border-color: rgba(255,93,93,.45); background: rgba(255,93,93,.12); }
     .cbtn.good{ border-color: rgba(65,211,138,.45); background: rgba(65,211,138,.12); }
+    .cbtn.neutral{ border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.06); }
 
     .footerNote{
       margin-top: 10px;
@@ -378,7 +397,6 @@
       font-weight: 800;
     }
 
-    /* Keep iPhone sizing nice */
     @media (max-width: 420px){
       .brand{font-size: 18px;}
       .bigScore{font-size: 58px;}
@@ -412,9 +430,14 @@
           <!-- Setup view -->
           <div id="setupView">
             <div class="hint">
-              This page is designed for iPhone scoring + live watching. Share the <b>same room URL</b> with watchers.
-              <br><br>
-              <b>Tip:</b> Use different rooms for parallel matches, like <code>?room=table1</code> and <code>?room=table2</code>.
+              This page is designed for iPhone scoring + live watching. Share the <strong>same room URL</strong> with watchers.
+              <div class="stateLine">
+                <span class="stateBadge idle" id="roomStateBadge"><span class="miniDot"></span><span id="roomStateText">Room: idle</span></span>
+                <span style="color:var(--muted);font-size:12px;" id="roomStateMsg"></span>
+              </div>
+              <div style="margin-top:10px;">
+                <strong>Tip:</strong> Use different rooms for parallel matches, like <code>?room=table1</code> and <code>?room=table2</code>.
+              </div>
             </div>
 
             <div class="form">
@@ -500,9 +523,11 @@
             <div class="controls" id="scorerControls" style="display:none;">
               <button class="cbtn blue" id="ptA">+1 (Blue)</button>
               <button class="cbtn orange" id="ptB">+1 (Orange)</button>
-              <button class="cbtn" id="undoBtn">Undo</button>
-              <button class="cbtn" id="swapServeBtn">Swap Serve</button>
+              <button class="cbtn neutral" id="undoBtn">Undo</button>
+              <button class="cbtn neutral" id="swapServeBtn">Swap Serve</button>
+              <button class="cbtn warn" id="cancelMatchBtn">Cancel</button>
               <button class="cbtn warn" id="endMatchBtn">End Match</button>
+              <button class="cbtn good" id="restartMatchBtn">Restart</button>
               <button class="cbtn good" id="newMatchBtn">New Match</button>
             </div>
 
@@ -531,7 +556,7 @@
 
             <div class="controls" id="resultControls">
               <button class="cbtn good" id="resultNewMatchBtn">Start New Match</button>
-              <button class="cbtn" id="backToLiveBtn">Back</button>
+              <button class="cbtn neutral" id="backToSetupBtn">Back to Setup</button>
             </div>
 
             <div class="footerNote">Tip: Add this page to Home Screen for quick scoring tomorrow.</div>
@@ -550,7 +575,7 @@
         </div>
         <div class="panelBody">
           <div class="hint" style="margin-bottom:12px;">
-            <b>Scorer link</b> owns the room. If a second scorer opens the same room, they will be forced into watch mode.
+            <strong>Scorer link</strong> owns the room. If a second scorer opens the same room, they will be forced into watch mode.
             <br><br>
             Use different rooms for parallel matches: <code>room=table1</code>, <code>room=table2</code>, etc.
           </div>
@@ -587,14 +612,13 @@
 
   <script type="module">
     /*******
-     * 0) URL + params (NEVER shadow built-in URL)
+     * 0) URL + params
      *******/
     const pageUrl = new window.URL(window.location.href);
     const qp = pageUrl.searchParams;
 
     const roleParam = (qp.get("role") || "watch").toLowerCase();   // watch | scorer
     const roomParam = (qp.get("room") || localStorage.getItem("ttfl_room") || "table1").trim();
-    const vParam = qp.get("v") || "";
 
     /*******
      * 1) UI helpers
@@ -603,7 +627,7 @@
     const toastEl = $("toast");
 
     function toast(msg, sub = "") {
-      toastEl.innerHTML = ${msg}${sub ? `<small>${sub}</small> : ""}`;
+      toastEl.innerHTML = `${msg}${sub ? `<small>${sub}</small>` : ""}`;
       toastEl.classList.add("show");
       setTimeout(() => toastEl.classList.remove("show"), 2600);
     }
@@ -635,18 +659,41 @@
       return t.length ? t.slice(0,22) : fallback;
     }
 
+    function clone(obj){
+      try { return structuredClone(obj); } catch { return JSON.parse(JSON.stringify(obj)); }
+    }
+
+    function setRoomStateBadge(state, msg=""){
+      const badge = $("roomStateBadge");
+      const text = $("roomStateText");
+      const msgEl = $("roomStateMsg");
+
+      badge.classList.remove("idle","scheduled","live","cancelled");
+      badge.classList.add(state || "idle");
+
+      const label = ({
+        idle: "Room: idle",
+        scheduled: "Room: scheduled",
+        live: "Room: live",
+        cancelled: "Room: cancelled"
+      })[state] || "Room: idle";
+
+      text.textContent = label;
+      msgEl.textContent = msg || "";
+    }
+
     /*******
      * 2) Firebase (Realtime Database)
      *******/
-const firebaseConfig = {
-  apiKey: "AIzaSyD221i61Z824UbXSLRT-UZs7w60KNzh5nY",
-  authDomain: "ttfl-live-score.firebaseapp.com",
-  databaseURL: "https://ttfl-live-score-default-rtdb.firebaseio.com",
-  projectId: "ttfl-live-score",
-  storageBucket: "ttfl-live-score.firebasestorage.app",
-  messagingSenderId: "698939580201",
-  appId: "1:698939580201:web:80540510de083f676ce138"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyD221i61Z824UbXSLRT-UZs7w60KNzh5nY",
+      authDomain: "ttfl-live-score.firebaseapp.com",
+      databaseURL: "https://ttfl-live-score-default-rtdb.firebaseio.com",
+      projectId: "ttfl-live-score",
+      storageBucket: "ttfl-live-score.firebasestorage.app",
+      messagingSenderId: "698939580201",
+      appId: "1:698939580201:web:80540510de083f676ce138"
+    };
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import { getDatabase, ref, get, set, update, onValue, off, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
@@ -664,13 +711,13 @@ const firebaseConfig = {
     const roomId = roomParam.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0,30) || "table1";
     localStorage.setItem("ttfl_room", roomId);
 
-    const roomRef = ref(db, rooms/${roomId});
+    const roomRef = ref(db, `rooms/${roomId}`);
     let currentMatchId = null;
     let currentMatchUnsub = null;
+    let lastRoomSnapshot = null;
 
     const state = {
       role: roleParam === "scorer" ? "scorer" : "watch",
-      ownerUid: null,
       match: null,
       undoStack: []
     };
@@ -752,37 +799,34 @@ const firebaseConfig = {
     }
 
     function computeServer(match) {
-      // serve changes every 2 points; at deuce (10-10+) changes every 1
+      // serve changes every 2 points; at deuce changes every 1
       const total = match.scoreA + match.scoreB;
       const deuce = match.scoreA >= (match.pointsToWin - 1) && match.scoreB >= (match.pointsToWin - 1);
       const interval = deuce ? 1 : 2;
 
       const start = match.tossWinner; // 'A' or 'B' starts serve
       const flips = Math.floor(total / interval);
-      const server = (flips % 2 === 0) ? start : (start === "A" ? "B" : "A");
-      return server;
+      return (flips % 2 === 0) ? start : (start === "A" ? "B" : "A");
     }
 
     function renderLive(match) {
       if (!match) return;
 
-      $("matchTitle").textContent = ${match.nameA} vs ${match.nameB};
-      $("matchMeta").textContent = Game ${match.gameIndex} • Best of ${match.bestOf};
+      $("matchTitle").textContent = `${match.nameA} vs ${match.nameB}`;
+      $("matchMeta").textContent = `Game ${match.gameIndex} • Best of ${match.bestOf}`;
 
       $("liveNameA").textContent = match.nameA;
       $("liveNameB").textContent = match.nameB;
       $("scoreA").textContent = match.scoreA;
       $("scoreB").textContent = match.scoreB;
 
-      // Serve badge
       const srv = computeServer(match);
       $("serveA").style.display = srv === "A" ? "" : "none";
       $("serveB").style.display = srv === "B" ? "" : "none";
 
-      // Set history (centered, one per row)
       const list = $("setList");
       list.innerHTML = "";
-      (match.sets || []).forEach((s, idx) => {
+      (match.sets || []).forEach((s) => {
         const el = document.createElement("div");
         el.className = "setItem";
         el.innerHTML = `
@@ -793,7 +837,6 @@ const firebaseConfig = {
         list.appendChild(el);
       });
 
-      // If none yet
       if (!match.sets || match.sets.length === 0) {
         const el = document.createElement("div");
         el.className = "setItem";
@@ -812,13 +855,17 @@ const firebaseConfig = {
       (match.sets || []).forEach((s) => {
         const el = document.createElement("div");
         el.className = "setItem";
-        el.innerHTML = <span class="chipA">${s.a}</span><span class="sep">:</span><span class="chipB">${s.b}</span>;
+        el.innerHTML = `
+          <span class="chipA">${s.a}</span>
+          <span class="sep">:</span>
+          <span class="chipB">${s.b}</span>
+        `;
         list.appendChild(el);
       });
     }
 
     function canScoreThisMatch(match) {
-      return state.role === "scorer" && match && match.ownerUid && match.ownerUid === uid;
+      return state.role === "scorer" && match && match.ownerUid && uid && match.ownerUid === uid;
     }
 
     /*******
@@ -828,7 +875,7 @@ const firebaseConfig = {
       if (!matchId) return;
       if (currentMatchUnsub) { currentMatchUnsub(); currentMatchUnsub = null; }
 
-      const matchRef = ref(db, matches/${matchId});
+      const matchRef = ref(db, `matches/${matchId}`);
       const handler = (snap) => {
         const m = snap.val();
         if (!m) return;
@@ -844,7 +891,6 @@ const firebaseConfig = {
           toast("Another scorer owns this match.", "You are in watch mode.");
         }
 
-        // view selection
         if (m.status === "ended") {
           showView("result");
           renderResult(m);
@@ -853,7 +899,6 @@ const firebaseConfig = {
           renderLive(m);
         }
 
-        // scorer controls
         $("scorerControls").style.display = canScoreThisMatch(m) ? "" : "none";
       };
 
@@ -861,21 +906,33 @@ const firebaseConfig = {
       currentMatchUnsub = () => off(matchRef, "value", handler);
     }
 
-    onValue(roomRef, (snap) => {
-      const room = snap.val();
+    function applyRoomSnapshot(room){
+      lastRoomSnapshot = room || null;
 
-      // room not initialized yet
+      const roomState = (room && room.status) ? room.status : "idle";
+      const msg = (room && room.message) ? room.message : "";
+      setRoomStateBadge(roomState, msg);
+
+      // No current match -> watchers should see setup and the room state badge
       if (!room || !room.currentMatchId) {
         currentMatchId = null;
-        showView("setup");
+        if (state.role === "watch") {
+          showView("setup");
+        } else {
+          // scorer can stay on setup too
+          showView("setup");
+        }
         return;
       }
 
+      // Room has active match
       if (room.currentMatchId !== currentMatchId) {
         currentMatchId = room.currentMatchId;
         subscribeMatch(currentMatchId);
       }
-    });
+    }
+
+    onValue(roomRef, (snap) => applyRoomSnapshot(snap.val()));
 
     /*******
      * 7) Auth + start
@@ -901,8 +958,15 @@ const firebaseConfig = {
     /*******
      * 8) Start match (scorer)
      *******/
+    async function setRoomStatusPatch(patch){
+      try{
+        await update(roomRef, { ...patch, updatedAt: serverTimestamp() });
+      }catch(e){
+        console.error(e);
+      }
+    }
+
     $("startBtn").addEventListener("click", async () => {
-      // Always set intended role to scorer when pressing Start
       state.role = "scorer";
       $("roleBadge").textContent = state.role;
       $("modeText").textContent = state.role;
@@ -916,18 +980,17 @@ const firebaseConfig = {
       const bestOf = Number($("bestOf").value || 5);
       const pointsToWin = Number($("pointsToWin").value || 11);
 
-      // Create new match id
-      const matchId = m_${Date.now()}_${Math.random().toString(16).slice(2,8)};
+      const matchId = `m_${Date.now()}_${Math.random().toString(16).slice(2,8)}`;
 
       const match = {
         matchId,
         roomId,
         ownerUid: uid,
-        pinHash: btoa(pin).slice(0,16), // simple (enough for casual use); not security-grade
+        pinHash: btoa(pin).slice(0,16), // casual use only
         nameA, nameB,
         bestOf,
         pointsToWin,
-        tossWinner, // 'A' or 'B' starts serve
+        tossWinner,
         scoreA: 0,
         scoreB: 0,
         sets: [],
@@ -940,12 +1003,8 @@ const firebaseConfig = {
       };
 
       try {
-        // Write match (owner only)
-        await set(ref(db, matches/${matchId}), match);
-
-        // Set room current match (any authed user can write rooms per rules)
-        await update(roomRef, { currentMatchId: matchId, updatedAt: serverTimestamp() });
-
+        await set(ref(db, `matches/${matchId}`), match);
+        await setRoomStatusPatch({ currentMatchId: matchId, status: "live", message: "Match is live" });
         state.undoStack = [];
         toast("Match started");
       } catch (e) {
@@ -959,16 +1018,14 @@ const firebaseConfig = {
      * 9) Scoring actions (owner only)
      *******/
     async function updateMatchAtomic(fn) {
-      const m = state.match;
-      if (!m || !currentMatchId) return;
-
-      const matchRef = ref(db, matches/${currentMatchId});
+      if (!currentMatchId) return;
+      const matchRef = ref(db, `matches/${currentMatchId}`);
 
       try {
         await runTransaction(matchRef, (cur) => {
           if (!cur) return cur;
-          if (cur.ownerUid !== uid) return cur; // owner-only
-          const next = fn(structuredClone(cur));
+          if (!uid || cur.ownerUid !== uid) return cur; // owner-only
+          const next = fn(clone(cur));
           next.updatedAt = Date.now();
           return next;
         });
@@ -987,7 +1044,7 @@ const firebaseConfig = {
       const m = state.match;
       if (!canScoreThisMatch(m)) { toast("Not scorer for this match"); return; }
 
-      pushUndo({ ...m });
+      pushUndo(clone(m));
 
       await updateMatchAtomic((cur) => {
         if (cur.status !== "live") return cur;
@@ -995,22 +1052,17 @@ const firebaseConfig = {
         if (which === "A") cur.scoreA += 1;
         else cur.scoreB += 1;
 
-        // Auto-end game if won
         if (isGameWon(cur.scoreA, cur.scoreB, cur.pointsToWin)) {
-          // Record set score
           cur.sets = cur.sets || [];
           cur.sets.push({ a: cur.scoreA, b: cur.scoreB });
 
-          // Increment sets won
           if (cur.scoreA > cur.scoreB) cur.setsA += 1;
           else cur.setsB += 1;
 
-          // Reset points for next game
           cur.scoreA = 0;
           cur.scoreB = 0;
           cur.gameIndex = (cur.sets.length + 1);
 
-          // End match only when someone reaches setsToWin
           const need = setsToWin(cur.bestOf);
           if (cur.setsA >= need || cur.setsB >= need) {
             cur.status = "ended";
@@ -1018,6 +1070,12 @@ const firebaseConfig = {
         }
         return cur;
       });
+
+      // If it ended, mark room ended too (watchers will see result via match subscription)
+      const m2 = state.match;
+      if (m2 && m2.status === "ended") {
+        await setRoomStatusPatch({ status: "ended", message: "Match ended" });
+      }
     }
 
     $("ptA").addEventListener("click", () => addPoint("A"));
@@ -1030,8 +1088,7 @@ const firebaseConfig = {
       if (!prev) { toast("Nothing to undo"); return; }
 
       try {
-        // restore whole match snapshot
-        await set(ref(db, matches/${currentMatchId}), { ...prev, updatedAt: Date.now() });
+        await set(ref(db, `matches/${currentMatchId}`), { ...prev, updatedAt: Date.now() });
         toast("Undone");
       } catch (e) {
         console.error(e);
@@ -1043,7 +1100,7 @@ const firebaseConfig = {
       const m = state.match;
       if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
 
-      pushUndo({ ...m });
+      pushUndo(clone(m));
 
       await updateMatchAtomic((cur) => {
         cur.tossWinner = (cur.tossWinner === "A") ? "B" : "A";
@@ -1060,31 +1117,76 @@ const firebaseConfig = {
         cur.status = "ended";
         return cur;
       });
+      await setRoomStatusPatch({ status: "ended", message: "Match ended" });
       toast("Match ended");
     });
 
-    $("newMatchBtn").addEventListener("click", () => {
-      showView("setup");
-      toast("Ready for new match");
+    // Cancel: removes currentMatchId so watchers go back to setup and see "cancelled"
+    $("cancelMatchBtn").addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+
+      try{
+        await setRoomStatusPatch({ currentMatchId: null, status: "cancelled", message: "Match cancelled", lastMatchId: currentMatchId || null });
+        toast("Cancelled", "Watchers will see cancellation.");
+        showView("setup");
+      }catch(e){
+        console.error(e);
+        toast("Cancel failed");
+      }
     });
 
-    $("resultNewMatchBtn").addEventListener("click", () => {
+    // Restart: keep same matchId but reset scores/sets to zero and room becomes live
+    $("restartMatchBtn").addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+
+      pushUndo(clone(m));
+
+      await updateMatchAtomic((cur) => {
+        cur.scoreA = 0;
+        cur.scoreB = 0;
+        cur.sets = [];
+        cur.setsA = 0;
+        cur.setsB = 0;
+        cur.gameIndex = 1;
+        cur.status = "live";
+        return cur;
+      });
+
+      await setRoomStatusPatch({ status: "live", message: "Match restarted", currentMatchId: currentMatchId });
+      toast("Restarted", "Scores reset to 0–0.");
+    });
+
+    // New match: goes to setup but does not change room until Start is pressed
+    $("newMatchBtn").addEventListener("click", async () => {
+      showView("setup");
+      toast("Ready for new match");
+      // Optional: show scheduled state so watchers know match is being prepared
+      if (state.role === "scorer") {
+        await setRoomStatusPatch({ currentMatchId: null, status: "scheduled", message: "Scorer is setting up a match" });
+      }
+    });
+
+    $("resultNewMatchBtn").addEventListener("click", async () => {
       showView("setup");
       toast("Start a new match");
+      if (state.role === "scorer") {
+        await setRoomStatusPatch({ currentMatchId: null, status: "scheduled", message: "Scorer is setting up a match" });
+      }
     });
-    $("backToLiveBtn").addEventListener("click", () => {
-      if (state.match && state.match.status !== "ended") showView("live");
-      else showView("setup");
+
+    $("backToSetupBtn").addEventListener("click", () => {
+      showView("setup");
     });
 
     /*******
-     * 10) Download Scorecard (best on iPhone Safari)
+     * 10) Download Scorecard (PNG)
      *******/
     async function downloadScorecard() {
       const panel = $("mainPanel");
       toast("Preparing download...");
       try {
-        // Ensure result view showing
         const canvas = await window.html2canvas(panel, {
           backgroundColor: null,
           scale: 2,
@@ -1094,7 +1196,7 @@ const firebaseConfig = {
 
         const a = document.createElement("a");
         const ts = new Date().toISOString().replace(/[:.]/g,"-");
-        a.download = TTFL-scorecard-${roomId}-${ts}.png;
+        a.download = `TTFL-scorecard-${roomId}-${ts}.png`;
         a.href = dataUrl;
         document.body.appendChild(a);
         a.click();
@@ -1109,11 +1211,10 @@ const firebaseConfig = {
     $("downloadBtn").addEventListener("click", downloadScorecard);
 
     /*******
-     * 11) Initial screen behavior
+     * 11) Initial view
      *******/
-    // If opened as watch, go live view (it will follow current match if any)
     if (state.role === "watch") {
-      showView("live");
+      showView("setup"); // will auto move to live when room has currentMatchId
     } else {
       showView("setup");
     }
