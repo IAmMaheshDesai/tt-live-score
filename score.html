@@ -686,10 +686,10 @@
 
   <!-- Firebase (Realtime Database) -->
   <script type="module">
-    /**********************
+    /******************************************************************
      * 1) PASTE YOUR firebaseConfig HERE (Realtime Database project)
-     **********************/
-    const firebaseConfig = {
+     ******************************************************************/
+const firebaseConfig = {
   apiKey: "AIzaSyD221i61Z824UbXSLRT-UZs7w60KNzh5nY",
   authDomain: "ttfl-live-score.firebaseapp.com",
   databaseURL: "https://ttfl-live-score-default-rtdb.firebaseio.com",
@@ -699,17 +699,17 @@
   appId: "1:698939580201:web:80540510de083f676ce138"
 };
 
-    /**********************
+    /******************************************************************
      * SETTINGS (keep simple)
-     **********************/
+     ******************************************************************/
     const ROOM_ID = "ttfl"; // everyone uses same room
     const URL = new URL(location.href);
     const ROLE = (URL.searchParams.get("role") || "watch").toLowerCase(); // "scorer" or "watch"
     const WANTS_SCORER = ROLE === "scorer";
 
-    /**********************
+    /******************************************************************
      * Firebase imports
-     **********************/
+     ******************************************************************/
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import {
       getDatabase, ref, onValue, set, update, get, serverTimestamp, runTransaction
@@ -718,9 +718,9 @@
       getAuth, signInAnonymously, onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 
-    /**********************
+    /******************************************************************
      * UI helpers
-     **********************/
+     ******************************************************************/
     const $ = (id) => document.getElementById(id);
 
     const statusPill = $("statusPill");
@@ -822,9 +822,9 @@
       return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,"0")).join("");
     }
 
-    /**********************
+    /******************************************************************
      * Core match logic
-     **********************/
+     ******************************************************************/
     function winsNeeded(bestOfN){
       return Math.floor(bestOfN / 2) + 1; // best-of-5 => 3
     }
@@ -852,9 +852,9 @@
       return a > b ? "A" : "B";
     }
 
-    /**********************
+    /******************************************************************
      * Firebase init + state
-     **********************/
+     ******************************************************************/
     let app, db, auth;
     let uid = null;
 
@@ -866,13 +866,13 @@
     // local undo stack (scorer only)
     let undoStack = [];
 
-    function roomRef(){ return ref(db, rooms/${ROOM_ID}); }
-    function currentMatchIdRef(){ return ref(db, rooms/${ROOM_ID}/currentMatchId); }
-    function matchRef(mid){ return ref(db, matches/${mid}); }
-    function matchCurrentRef(mid){ return ref(db, matches/${mid}/current); }
+    function roomRef(){ return ref(db, `rooms/${ROOM_ID}`); }
+    function currentMatchIdRef(){ return ref(db, `rooms/${ROOM_ID}/currentMatchId`); }
+    function matchRef(mid){ return ref(db, `matches/${mid}`); }
+    function matchCurrentRef(mid){ return ref(db, `matches/${mid}/current`); }
 
     async function init(){
-      rolePill.textContent = Role: ${WANTS_SCORER ? "scorer" : "watch"};
+      rolePill.textContent = `Role: ${WANTS_SCORER ? "scorer" : "watch"}`;
 
       // Update toss dropdown labels when names change
       function refreshTossLabels(){
@@ -1003,7 +1003,7 @@
       const bo = Number(m.bestOf || 5);
       const ptw = Number(m.pointsToWin || 11);
 
-      resultMeta.textContent = Best of ${bo} • ${ptw} to win;
+      resultMeta.textContent = `Best of ${bo} • ${ptw} to win`;
 
       // ownership
       const isOwner = (m.ownerUid && uid && m.ownerUid === uid);
@@ -1061,18 +1061,18 @@
       const msB = Number(m.matchScore?.b || 0);
 
       liveTitle.textContent = "Live";
-      liveSub.textContent = Game ${gi + 1} • Best of ${bo} (first to ${winsNeed});
+      liveSub.textContent = `Game ${gi + 1} • Best of ${bo} (first to ${winsNeed})`;
 
       scoreAEl.textContent = String(aPts);
       scoreBEl.textContent = String(bPts);
 
       const serve = computeServe(cur.startServer || m.startServer || "A", aPts, bPts);
-      pillServe.textContent = Serve: ${serve === "A" ? (m.players?.a || "Blue") : (m.players?.b || "Orange")};
+      pillServe.textContent = `Serve: ${serve === "A" ? (m.players?.a || "Blue") : (m.players?.b || "Orange")}`;
       serveA.classList.toggle("on", serve === "A");
       serveB.classList.toggle("on", serve === "B");
 
-      gamesWonAEl.textContent = ${msA}:${msB};
-      matchesInfoEl.textContent = ${msA}:${msB};
+      gamesWonAEl.textContent = `${msA}:${msB}`;
+      matchesInfoEl.textContent = `${msA}:${msB}`;
 
       // history
       const games = Array.isArray(m.games) ? m.games : [];
@@ -1090,10 +1090,10 @@
           row.className = "historyRow";
           const left = document.createElement("div");
           left.className = "g";
-          left.textContent = G${idx+1};
+          left.textContent = `G${idx+1}`;
           const mid = document.createElement("div");
           mid.className = "s";
-          mid.textContent = ${g.a} : ${g.b};
+          mid.textContent = `${g.a} : ${g.b}`;
           row.appendChild(left);
           row.appendChild(mid);
           historyList.appendChild(row);
@@ -1128,19 +1128,19 @@
       games.forEach((g, idx) => {
         const l = document.createElement("div");
         l.className = "setsLine";
-        l.innerHTML = <span>SET ${idx+1}</span><span>${g.duration || ""}</span>;
+        l.innerHTML = `<span>SET ${idx+1}</span><span>${g.duration || ""}</span>`;
         resultSetsLeft.appendChild(l);
 
         const r = document.createElement("div");
         r.className = "setsLine";
-        r.innerHTML = <span>${g.a} : ${g.b}</span><span>${g.winner === "A" ? (m.players?.a||"Blue") : (m.players?.b||"Orange")}</span>;
+        r.innerHTML = `<span>${g.a} : ${g.b}</span><span>${g.winner === "A" ? (m.players?.a||"Blue") : (m.players?.b||"Orange")}</span>`;
         resultSetsRight.appendChild(r);
       });
     }
 
-    /**********************
+    /******************************************************************
      * Scorer actions
-     **********************/
+     ******************************************************************/
     async function startMatchFlow(){
       setErr(setupError, "");
 
@@ -1160,7 +1160,7 @@
         return;
       }
 
-      const mid = m_${Date.now()}_${randomId()};
+      const mid = `m_${Date.now()}_${randomId()}`;
       const pinHash = await sha256Hex(pinStr);
 
       const now = Date.now();
@@ -1391,9 +1391,9 @@
       // do NOT clear currentMatchId here; when scorer starts, it will overwrite the room
     }
 
-    /**********************
+    /******************************************************************
      * Save score image (good-looking)
-     **********************/
+     ******************************************************************/
     async function saveScoreImage(){
       try{
         const node = resultCard;
@@ -1433,9 +1433,9 @@
       }
     }
 
-    /**********************
+    /******************************************************************
      * Start: if watcher, auto-watch; if scorer, show setup unless match live
-     **********************/
+     ******************************************************************/
     // Scorer: ensure role param is set
     if(WANTS_SCORER){
       URL.searchParams.set("role","scorer");
