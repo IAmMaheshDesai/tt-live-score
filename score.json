@@ -1,6 +1,6 @@
 {
-  "updatedAt": "2026-02-21T04:56:10.659Z",
-  "updatedBy": "c_8461e8d3f0381",
+  "updatedAt": "2026-02-21T04:59:47.471Z",
+  "updatedBy": "scorer",
   "match": {
     "bestOf": 5,
     "pointsToWin": 11,
@@ -9,8 +9,8 @@
     "gamesA": 0,
     "gamesB": 0,
     "pointsA": 0,
-    "pointsB": 1,
-    "server": "A",
+    "pointsB": 2,
+    "server": "B",
     "matchOver": false,
     "winner": null,
     "serverStart": "A"
