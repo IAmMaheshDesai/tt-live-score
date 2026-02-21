@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>TT Live Score</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#fff;color:#111}
+    .wrap{max-width:720px;margin:0 auto;padding:14px}
+    .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px}
+    .title{font-weight:900}
+    .sub{font-size:12px;color:#374151}
+    .pill{font-size:12px;color:#374151;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px;display:flex;gap:8px;align-items:center}
+    .dot{width:9px;height:9px;border-radius:999px;background:#9ca3af}
+    .dot.ok{background:#16a34a}.dot.bad{background:#dc2626}
+    .card{border:1px solid #e5e7eb;border-radius:14px;padding:12px;margin-top:12px}
+    .score{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+    .side{border:1px solid #e5e7eb;border-radius:14px;padding:12px;background:#fafafa}
+    .name{display:flex;justify-content:space-between;align-items:center;font-weight:900}
+    .srv{font-size:12px;border:1px solid #e5e7eb;background:#fff;border-radius:999px;padding:3px 8px;color:#374151}
+    .pts{font-size:76px;font-weight:900;line-height:1;margin:8px 0;text-align:center}
+    .meta{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;color:#374151;font-size:13px;margin-top:6px}
+    .meta b{color:#111}
+    .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .btnrow2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    button{border:1px solid #e5e7eb;background:#fff;border-radius:12px;padding:12px;font-weight:900;font-size:16px;cursor:pointer}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .small{font-size:13px;padding:10px}
+    .danger{border-color:#fecaca;background:#fff5f5}
+    .form{display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:center;margin-top:10px}
+    @media (max-width:520px){.form{grid-template-columns:1fr}}
+    input{border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px;font-size:14px;width:100%}
+    .hint{font-size:12px;color:#374151;margin-top:10px;line-height:1.35}
+    .warn{border:1px solid #fecaca;background:#fff5f5;border-radius:12px;padding:10px;color:#7f1d1d;font-size:12px;margin-top:10px}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="title">TT Live Score</div>
+      <div class="sub" id="sub">…</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <div class="pill"><span class="dot" id="dot"></span><span id="net">Starting…</span></div>
+      <div class="pill">Mode: <b id="modeTxt">…</b></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+      <div style="font-weight:900" id="statusLine">Match</div>
+      <div style="font-size:12px;color:#374151" id="updated">—</div>
+    </div>
+
+    <div class="score">
+      <div class="side">
+        <div class="name"><span id="aName">Player A</span><span class="srv" id="aSrv" style="display:none">SERVE</span></div>
+        <div class="pts" id="aPts">0</div>
+      </div>
+      <div class="side">
+        <div class="name"><span id="bName">Player B</span><span class="srv" id="bSrv" style="display:none">SERVE</span></div>
+        <div class="pts" id="bPts">0</div>
+      </div>
+    </div>
+
+    <div class="meta">
+      <span>Games: <b id="games">0–0</b></span>
+      <span>•</span>
+      <span>Best of <b id="bestOf">5</b></span>
+      <span>•</span>
+      <span>To <b id="ptWin">11</b></span>
+      <span id="over" style="display:none">• <b>Match Over</b></span>
+    </div>
+
+    <div id="scorerUI" style="display:none">
+      <div class="btnrow">
+        <button id="btnA">+1 A</button>
+        <button id="btnB">+1 B</button>
+      </div>
+      <div class="btnrow2">
+        <button class="small" id="btnSwap">Swap Serve</button>
+        <button class="small danger" id="btnResetGame">Reset Game</button>
+        <button class="small danger" id="btnResetMatch">Reset Match</button>
+        <button class="small" id="btnUndo">Undo</button>
+      </div>
+      <div class="hint">Only the scorer can change the score. Watchers update live.</div>
+    </div>
+
+    <div id="watchUI" class="hint" style="display:none">
+      Watch mode is read-only. Updates are live.
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:900">Match Setup</div>
+
+    <div class="form"><div style="color:#374151;font-weight:900">Match ID</div><input id="matchId" placeholder="Example: tanvi-2026-02-20"></div>
+
+    <div class="form"><div style="color:#374151;font-weight:900">Name A</div><input id="nameA" placeholder="Tanvi"></div>
+    <div class="form"><div style="color:#374151;font-weight:900">Name B</div><input id="nameB" placeholder="Opponent"></div>
+
+    <div class="form"><div style="color:#374151;font-weight:900">Best of</div><input id="bestOfIn" type="number" min="1" step="2" value="5"></div>
+    <div class="form"><div style="color:#374151;font-weight:900">Points to win</div><input id="ptWinIn" type="number" min="1" value="11"></div>
+
+    <div id="pinBox" style="display:none">
+      <div class="form"><div style="color:#374151;font-weight:900">PIN</div><input id="pin" type="password" inputmode="numeric" placeholder="4 digits"></div>
+      <div class="warn">Scorer only. Remember this PIN. Watchers do not need it.</div>
+    </div>
+
+    <div class="btnrow2" style="margin-top:12px">
+      <button class="small" id="saveSetup">Save</button>
+      <button class="small" id="copyWatch">Copy Watch Link</button>
+      <button class="small" id="copyScore">Copy Score Link</button>
+      <button class="small" id="newMatch">New Match (reset)</button>
+    </div>
+
+    <div class="hint" id="hint"></div>
+  </div>
+</div>
+
+<!-- Firebase (Realtime Database) via CDN -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, onValue, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+  // =========================
+  // PASTE YOUR firebaseConfig HERE
+  // =========================
+  const firebaseConfig = {
+      apiKey: "AIzaSyD221i61Z824UbXSLRT-UZs7w60KNzh5nY",
+  authDomain: "ttfl-live-score.firebaseapp.com",
+  databaseURL: "https://ttfl-live-score-default-rtdb.firebaseio.com",
+  projectId: "ttfl-live-score",
+  storageBucket: "ttfl-live-score.firebasestorage.app",
+  messagingSenderId: "698939580201",
+  appId: "1:698939580201:web:80540510de083f676ce138"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getDatabase(app);
+
+  const $ = (id) => document.getElementById(id);
+
+  const params = new URL(location.href).searchParams;
+  const role = (params.get("role") || "watch").toLowerCase() === "scorer" ? "scorer" : "watch";
+
+  $("modeTxt").textContent = role;
+  $("sub").textContent = role === "scorer" ? "Scorer updates • Watchers see live" : "Watching live score";
+  $("scorerUI").style.display = role === "scorer" ? "block" : "none";
+  $("watchUI").style.display  = role === "watch"  ? "block" : "none";
+  $("pinBox").style.display   = role === "scorer" ? "block" : "none";
+
+  const LS = "tt_fb_simple_v1";
+  const saved = JSON.parse(localStorage.getItem(LS) || "{}");
+
+  $("matchId").value = params.get("match") || saved.matchId || "tanvi";
+  $("nameA").value   = saved.nameA || "Player A";
+  $("nameB").value   = saved.nameB || "Player B";
+  $("bestOfIn").value= saved.bestOf || 5;
+  $("ptWinIn").value = saved.ptWin || 11;
+  $("pin").value     = saved.pin || "";
+
+  const setNet = (ok, msg) => {
+    $("dot").className = "dot " + (ok ? "ok" : "bad");
+    $("net").textContent = msg;
+  };
+
+  function need(bestOf){ return Math.floor(bestOf/2)+1; }
+  function gameWinner(a,b,ptWin){
+    const max=Math.max(a,b), min=Math.min(a,b);
+    if(max<ptWin) return null;
+    if((max-min)<2) return null;
+    return a>b ? "A" : "B";
+  }
+  function computeServer(m){
+    const total=m.pointsA+m.pointsB;
+    const deuce=(m.pointsA>=m.pointsToWin-1)&&(m.pointsB>=m.pointsToWin-1);
+    const period=deuce?1:2;
+    const start=m.serverStart || "A";
+    const flips=Math.floor(total/period);
+    return (flips%2===0)?start:(start==="A"?"B":"A");
+  }
+
+  function render(state){
+    const m = state.match;
+    $("aName").textContent = m.teamAName;
+    $("bName").textContent = m.teamBName;
+    $("aPts").textContent  = m.pointsA;
+    $("bPts").textContent  = m.pointsB;
+    $("games").textContent = `${m.gamesA}–${m.gamesB}`;
+    $("bestOf").textContent= m.bestOf;
+    $("ptWin").textContent = m.pointsToWin;
+
+    const srv = computeServer(m);
+    $("aSrv").style.display = srv==="A" ? "inline-block" : "none";
+    $("bSrv").style.display = srv==="B" ? "inline-block" : "none";
+
+    $("over").style.display = m.matchOver ? "inline" : "none";
+    $("statusLine").textContent = m.matchOver ? `Winner: ${m.winner}` : "Match";
+    $("updated").textContent = state.updatedAt ? `Updated: ${new Date(state.updatedAt).toLocaleString()}` : "—";
+  }
+
+  function nowIso(){ return new Date().toISOString(); }
+
+  function matchRef(){
+    return ref(db, `matches/${$("matchId").value.trim()}`);
+  }
+
+  async function ensureMatchExists(){
+    const snap = await get(matchRef());
+    if (snap.exists()) return snap.val();
+
+    // First-time create (pin required for scorer)
+    const pin = ($("pin").value || "").trim();
+    if (role === "scorer" && pin.length < 4) {
+      throw new Error("Enter a 4-digit PIN to create the match.");
+    }
+
+    const bestOf = Number($("bestOfIn").value || 5);
+    const ptWin  = Number($("ptWinIn").value || 11);
+
+    const init = {
+      pin: role === "scorer" ? pin : null,
+      match: {
+        teamAName: ($("nameA").value || "Player A").trim(),
+        teamBName: ($("nameB").value || "Player B").trim(),
+        bestOf,
+        pointsToWin: ptWin,
+        gamesA: 0, gamesB: 0,
+        pointsA: 0, pointsB: 0,
+        serverStart: "A",
+        matchOver: false,
+        winner: ""
+      },
+      history: [],
+      updatedAt: nowIso()
+    };
+
+    await set(matchRef(), init);
+    return init;
+  }
+
+  async function writeState(nextState){
+    // PIN enforcement (very simple)
+    const pin = ($("pin").value || "").trim();
+    const snap = await get(matchRef());
+    if (!snap.exists()) throw new Error("Match not found. Click Save to create it.");
+
+    const current = snap.val();
+    const storedPin = current.pin;
+
+    if (role === "scorer") {
+      if (!storedPin) throw new Error("Match has no PIN set.");
+      if (pin !== storedPin) throw new Error("Wrong PIN.");
+    } else {
+      throw new Error("Watchers cannot write.");
+    }
+
+    await set(matchRef(), nextState);
+  }
+
+  function pushHistory(state){
+    const h = Array.isArray(state.history) ? state.history : [];
+    h.push({
+      pointsA: state.match.pointsA,
+      pointsB: state.match.pointsB,
+      gamesA: state.match.gamesA,
+      gamesB: state.match.gamesB,
+      serverStart: state.match.serverStart,
+      matchOver: state.match.matchOver,
+      winner: state.match.winner,
+      at: nowIso()
+    });
+    while (h.length > 30) h.shift();
+    state.history = h;
+  }
+
+  async function change(mutator){
+    const snap = await get(matchRef());
+    if (!snap.exists()) throw new Error("Match not found. Click Save to create it.");
+    const state = snap.val();
+
+    pushHistory(state);
+    mutator(state);
+
+    state.updatedAt = nowIso();
+    await writeState(state);
+  }
+
+  // Buttons (scorer)
+  $("btnA").onclick = () => safe(() => change((s)=>{
+    const m = s.match;
+    if (m.matchOver) return;
+    m.pointsA++;
+    const w = gameWinner(m.pointsA, m.pointsB, m.pointsToWin);
+    if (w){
+      if (w==="A") m.gamesA++; else m.gamesB++;
+      m.pointsA = 0; m.pointsB = 0;
+      m.serverStart = (m.serverStart==="A") ? "B" : "A";
+      const needed = need(m.bestOf);
+      if (m.gamesA >= needed){ m.matchOver = true; m.winner = m.teamAName; }
+      if (m.gamesB >= needed){ m.matchOver = true; m.winner = m.teamBName; }
+    }
+  }));
+
+  $("btnB").onclick = () => safe(() => change((s)=>{
+    const m = s.match;
+    if (m.matchOver) return;
+    m.pointsB++;
+    const w = gameWinner(m.pointsA, m.pointsB, m.pointsToWin);
+    if (w){
+      if (w==="A") m.gamesA++; else m.gamesB++;
+      m.pointsA = 0; m.pointsB = 0;
+      m.serverStart = (m.serverStart==="A") ? "B" : "A";
+      const needed = need(m.bestOf);
+      if (m.gamesA >= needed){ m.matchOver = true; m.winner = m.teamAName; }
+      if (m.gamesB >= needed){ m.matchOver = true; m.winner = m.teamBName; }
+    }
+  }));
+
+  $("btnSwap").onclick = () => safe(() => change((s)=>{
+    const m = s.match;
+    m.serverStart = (m.serverStart==="A") ? "B" : "A";
+  }));
+
+  $("btnResetGame").onclick = () => confirm("Reset current game to 0–0?") && safe(() => change((s)=>{
+    const m = s.match;
+    if (m.matchOver) return;
+    m.pointsA = 0; m.pointsB = 0;
+  }));
+
+  $("btnResetMatch").onclick = () => confirm("Reset match to 0?") && safe(() => change((s)=>{
+    const m = s.match;
+    m.gamesA = 0; m.gamesB = 0;
+    m.pointsA = 0; m.pointsB = 0;
+    m.matchOver = false;
+    m.winner = "";
+    m.serverStart = "A";
+  }));
+
+  $("btnUndo").onclick = () => safe(async () => {
+    const snap = await get(matchRef());
+    if (!snap.exists()) throw new Error("Match not found.");
+    const state = snap.val();
+    const h = Array.isArray(state.history) ? state.history : [];
+    const last = h.pop();
+    if (!last) return;
+
+    state.match.pointsA = last.pointsA;
+    state.match.pointsB = last.pointsB;
+    state.match.gamesA  = last.gamesA;
+    state.match.gamesB  = last.gamesB;
+    state.match.serverStart = last.serverStart;
+    state.match.matchOver = last.matchOver;
+    state.match.winner = last.winner;
+
+    state.history = h;
+    state.updatedAt = nowIso();
+    await writeState(state);
+  });
+
+  // Setup buttons
+  $("saveSetup").onclick = () => safe(async () => {
+    const matchId = $("matchId").value.trim();
+    if (!matchId) throw new Error("Match ID is required.");
+
+    // Save local
+    localStorage.setItem(LS, JSON.stringify({
+      matchId,
+      nameA: $("nameA").value.trim(),
+      nameB: $("nameB").value.trim(),
+      bestOf: Number($("bestOfIn").value || 5),
+      ptWin:  Number($("ptWinIn").value || 11),
+      pin: $("pin").value.trim()
+    }));
+
+    const state = await ensureMatchExists();
+
+    // Update names/config (scorer only)
+    if (role === "scorer") {
+      await change((s)=>{
+        s.match.teamAName = ($("nameA").value || "Player A").trim();
+        s.match.teamBName = ($("nameB").value || "Player B").trim();
+        s.match.bestOf = Number($("bestOfIn").value || 5);
+        s.match.pointsToWin = Number($("ptWinIn").value || 11);
+      });
+    }
+
+    setNet(true, "Match ready");
+    $("hint").textContent = "Listening to: matches/" + matchId;
+  });
+
+  function buildUrl(roleName){
+    const u = new URL(location.href);
+    u.searchParams.set("role", roleName);
+    u.searchParams.set("match", $("matchId").value.trim());
+    // Do NOT include pin in URL
+    return u.toString();
+  }
+
+  $("copyWatch").onclick = async () => {
+    await navigator.clipboard.writeText(buildUrl("watch"));
+    setNet(true, "Watch link copied");
+  };
+
+  $("copyScore").onclick = async () => {
+    await navigator.clipboard.writeText(buildUrl("scorer"));
+    setNet(true, "Score link copied");
+  };
+
+  $("newMatch").onclick = () => {
+    localStorage.removeItem(LS);
+    location.href = location.pathname + "?role=" + role;
+  };
+
+  // Live subscribe
+  function subscribe(){
+    const id = $("matchId").value.trim();
+    if (!id) return;
+
+    const r = matchRef();
+    onValue(r, (snap) => {
+      if (!snap.exists()) {
+        setNet(false, "Match not found");
+        return;
+      }
+      render(snap.val());
+      setNet(true, "Live");
+    }, (err) => {
+      setNet(false, err?.message || "Listen error");
+    });
+
+    $("hint").textContent = "Listening to: matches/" + id;
+  }
+
+  async function safe(fn){
+    try{
+      $("net").textContent = "Working…";
+      await fn();
+    }catch(e){
+      setNet(false, e.message || "Error");
+      alert(e.message || "Error");
+    }
+  }
+
+  // Auto-start
+  subscribe();
+  setNet(true, "Ready");
+</script>
+</body>
+</html>
