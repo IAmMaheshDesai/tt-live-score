@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>TT Live Score</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#fff;color:#111}
+    .wrap{max-width:720px;margin:0 auto;padding:14px}
+    .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px}
+    .title{font-weight:900}
+    .sub{font-size:12px;color:#374151}
+    .pill{font-size:12px;color:#374151;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px;display:flex;gap:8px;align-items:center}
+    .dot{width:9px;height:9px;border-radius:999px;background:#9ca3af}
+    .dot.ok{background:#16a34a}.dot.bad{background:#dc2626}
+    .card{border:1px solid #e5e7eb;border-radius:14px;padding:12px;margin-top:12px}
+    .score{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+    .side{border:1px solid #e5e7eb;border-radius:14px;padding:12px;background:#fafafa}
+    .name{display:flex;justify-content:space-between;align-items:center;font-weight:900}
+    .srv{font-size:12px;border:1px solid #e5e7eb;background:#fff;border-radius:999px;padding:3px 8px;color:#374151}
+    .pts{font-size:76px;font-weight:900;line-height:1;margin:8px 0;text-align:center}
+    .meta{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;color:#374151;font-size:13px;margin-top:6px}
+    .meta b{color:#111}
+    .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .btnrow2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    button{border:1px solid #e5e7eb;background:#fff;border-radius:12px;padding:12px;font-weight:900;font-size:16px;cursor:pointer}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .small{font-size:13px;padding:10px}
+    .danger{border-color:#fecaca;background:#fff5f5}
+    .form{display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:center;margin-top:10px}
+    @media (max-width:520px){.form{grid-template-columns:1fr}}
+    input{border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px;font-size:14px;width:100%}
+    .hint{font-size:12px;color:#374151;margin-top:10px;line-height:1.35}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
+    .warn{border:1px solid #fecaca;background:#fff5f5;border-radius:12px;padding:10px;color:#7f1d1d;font-size:12px;margin-top:10px}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="title">TT Live Score</div>
+      <div class="sub" id="sub">…</div>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <div class="pill"><span class="dot" id="dot"></span><span id="net">Starting…</span></div>
+      <div class="pill">Mode: <b id="modeTxt">…</b></div>
+      <div class="pill">Poll: <b id="pollTxt">…</b></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
+      <div style="font-weight:900" id="statusLine">Match</div>
+      <div style="font-size:12px;color:#374151" id="updated">—</div>
+    </div>
+
+    <div class="score">
+      <div class="side">
+        <div class="name"><span id="aName">Player A</span><span class="srv" id="aSrv" style="display:none">SERVE</span></div>
+        <div class="pts" id="aPts">0</div>
+      </div>
+      <div class="side">
+        <div class="name"><span id="bName">Player B</span><span class="srv" id="bSrv" style="display:none">SERVE</span></div>
+        <div class="pts" id="bPts">0</div>
+      </div>
+    </div>
+
+    <div class="meta">
+      <span>Games: <b id="games">0–0</b></span>
+      <span>•</span>
+      <span>Best of <b id="bestOf">5</b></span>
+      <span>•</span>
+      <span>To <b id="ptWin">11</b></span>
+      <span id="over" style="display:none">• <b>Match Over</b></span>
+    </div>
+
+    <div id="scorerUI" style="display:none">
+      <div class="btnrow">
+        <button id="btnA">+1 A</button>
+        <button id="btnB">+1 B</button>
+      </div>
+      <div class="btnrow2">
+        <button class="small" id="btnSwap">Swap Serve</button>
+        <button class="small danger" id="btnResetGame">Reset Game</button>
+        <button class="small danger" id="btnResetMatch">Reset Match</button>
+        <button class="small" id="btnReload">Reload</button>
+      </div>
+    </div>
+
+    <div id="watchUI" class="hint" style="display:none">
+      Watch mode is read-only.
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:900">Settings</div>
+
+    <div class="form"><div style="color:#374151;font-weight:900">Poll (ms)</div><input id="pollMs" type="number" min="1000" step="500"></div>
+
+    <div id="tokenBox" style="display:none;margin-top:8px">
+      <div class="form"><div style="color:#374151;font-weight:900">Token</div><input id="token" type="password" placeholder="Fine-grained PAT"></div>
+      <div class="warn">Token is stored only in this device browser storage.</div>
+    </div>
+
+    <div class="btnrow2" style="margin-top:12px">
+      <button class="small" id="save">Save</button>
+      <button class="small" id="test">Test</button>
+    </div>
+
+    <div class="hint" id="hint"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const OWNER="IAmMaheshDesai";
+  const REPO="tt-live-score";
+  const BRANCH="main";
+  const PATH="score.json";
+
+  const $ = (id) => document.getElementById(id);
+  const mode = (new URL(location.href).searchParams.get("mode") || "watch").toLowerCase() === "score" ? "score" : "watch";
+
+  const LS="tt_ios_v1";
+  const defaults={ token:"", pollMs:2500 };
+  let st;
+  try { st = { ...defaults, ...(JSON.parse(localStorage.getItem(LS)||"null")||{}) }; }
+  catch { st = { ...defaults }; }
+
+  $("modeTxt").textContent = mode;
+  $("sub").textContent = mode==="score"
+    ? "Scorer writes to GitHub • Watchers see updates"
+    : "Watcher reads latest score";
+  $("scorerUI").style.display = mode==="score" ? "block" : "none";
+  $("watchUI").style.display = mode==="watch" ? "block" : "none";
+  $("tokenBox").style.display = mode==="score" ? "block" : "none";
+
+  $("pollMs").value = st.pollMs;
+  $("token").value = st.token || "";
+  $("pollTxt").textContent = st.pollMs + " ms";
+
+  const setNet=(ok,msg)=>{ $("dot").className="dot "+(ok?"ok":"bad"); $("net").textContent=msg; };
+  const b64decode=(b64)=>decodeURIComponent(escape(atob(b64)));
+  const b64encode=(str)=>btoa(unescape(encodeURIComponent(str)));
+  const nowIso=()=>new Date().toISOString();
+
+  const rawUrl=()=>`https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${PATH}`;
+  const contentsUrl=()=>`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}`;
+
+  function need(bestOf){ return Math.floor(bestOf/2)+1; }
+  function gameWinner(a,b,ptWin){
+    const max=Math.max(a,b), min=Math.min(a,b);
+    if(max<ptWin) return null;
+    if((max-min)<2) return null;
+    return a>b ? "A" : "B";
+  }
+  function computeServer(m){
+    const total=m.pointsA+m.pointsB;
+    const deuce=(m.pointsA>=m.pointsToWin-1)&&(m.pointsB>=m.pointsToWin-1);
+    const period=deuce?1:2;
+    const start=m.serverStart||m.server||"A";
+    const flips=Math.floor(total/period);
+    return (flips%2===0)?start:(start==="A"?"B":"A");
+  }
+
+  function render(doc){
+    const m=doc.match||{};
+    $("aName").textContent = m.teamAName || "Player A";
+    $("bName").textContent = m.teamBName || "Player B";
+    $("aPts").textContent  = m.pointsA ?? 0;
+    $("bPts").textContent  = m.pointsB ?? 0;
+    $("games").textContent = `${m.gamesA ?? 0}–${m.gamesB ?? 0}`;
+    $("bestOf").textContent= m.bestOf ?? 5;
+    $("ptWin").textContent = m.pointsToWin ?? 11;
+
+    const srv=computeServer(m);
+    $("aSrv").style.display = srv==="A" ? "inline-block" : "none";
+    $("bSrv").style.display = srv==="B" ? "inline-block" : "none";
+
+    $("over").style.display = m.matchOver ? "inline" : "none";
+    $("statusLine").textContent = m.matchOver ? `Winner: ${m.winner}` : "Match";
+    $("updated").textContent = doc.updatedAt ? `Updated: ${new Date(doc.updatedAt).toLocaleString()}` : "—";
+  }
+
+  // WATCH: prefer raw (fast), fallback to contents if raw is stale/cached
+  async function readWatch(){
+    // 1) try raw
+    try{
+      const r = await fetch(rawUrl() + "?t=" + Date.now(), { cache:"no-store" });
+      if(r.ok) return await r.json();
+    }catch(_){}
+
+    // 2) fallback to contents api
+    const u = contentsUrl()+`?ref=${encodeURIComponent(BRANCH)}&t=${Date.now()}`;
+    const res = await fetch(u, { headers:{ "Accept":"application/vnd.github+json", "Cache-Control":"no-cache" } });
+    if(!res.ok) throw new Error("Watch fetch failed: " + res.status);
+    const data = await res.json();
+    const text = b64decode((data.content||"").replace(/\n/g,""));
+    return JSON.parse(text);
+  }
+
+  // SCORE: always use contents api with sha
+  async function readForWrite(){
+    if(!st.token) throw new Error("Missing token.");
+    const u = contentsUrl()+`?ref=${encodeURIComponent(BRANCH)}&t=${Date.now()}`;
+    const res = await fetch(u, {
+      headers:{ "Accept":"application/vnd.github+json", "Authorization":"Bearer "+st.token, "Cache-Control":"no-cache" }
+    });
+    if(!res.ok){
+      const t = await res.text().catch(()=> "");
+      throw new Error(`Contents GET failed: ${res.status} ${t}`);
+    }
+    const data=await res.json();
+    const text=b64decode((data.content||"").replace(/\n/g,""));
+    return { sha:data.sha, doc:JSON.parse(text) };
+  }
+
+  async function putDoc(doc, sha, message){
+    const body={
+      message: message || "Update score",
+      content: b64encode(JSON.stringify(doc,null,2)),
+      sha,
+      branch: BRANCH
+    };
+    const res = await fetch(contentsUrl(), {
+      method:"PUT",
+      headers:{
+        "Accept":"application/vnd.github+json",
+        "Authorization":"Bearer "+st.token,
+        "Content-Type":"application/json"
+      },
+      body: JSON.stringify(body)
+    });
+    if(!res.ok){
+      const t=await res.text().catch(()=> "");
+      const err=new Error(`Contents PUT failed: ${res.status} ${t}`);
+      err.status=res.status;
+      throw err;
+    }
+  }
+
+  let saving=false;
+  const setBtns=(d)=>{ for(const id of ["btnA","btnB","btnSwap","btnResetGame","btnResetMatch","btnReload"]){ const el=$(id); if(el) el.disabled=d; } };
+
+  async function commit(mutator, msg){
+    if(saving) return;
+    saving=true; setBtns(true);
+    try{
+      for(let attempt=1; attempt<=6; attempt++){
+        const { sha, doc } = await readForWrite();
+
+        // normalize
+        doc.match = doc.match || {};
+        const m=doc.match;
+        m.bestOf = Number(m.bestOf || 5);
+        m.pointsToWin = Number(m.pointsToWin || 11);
+        m.teamAName = m.teamAName || "Player A";
+        m.teamBName = m.teamBName || "Player B";
+        m.gamesA = Number(m.gamesA || 0);
+        m.gamesB = Number(m.gamesB || 0);
+        m.pointsA = Number(m.pointsA || 0);
+        m.pointsB = Number(m.pointsB || 0);
+        m.server = m.server || "A";
+        m.serverStart = m.serverStart || m.server;
+
+        mutator(doc);
+
+        m.server = computeServer(m);
+        doc.updatedAt = nowIso();
+        doc.updatedBy = "scorer";
+
+        try{
+          await putDoc(doc, sha, msg);
+          render(doc);
+          setNet(true,"Saved");
+          return;
+        }catch(e){
+          if(e.status===409) continue;
+          throw e;
+        }
+      }
+      throw new Error("Too many conflicts. Only one scorer can be open.");
+    } finally {
+      saving=false; setBtns(false);
+    }
+  }
+
+  // mutations
+  const addPoint=(who)=>(doc)=>{
+    const m=doc.match;
+    if(m.matchOver) return;
+    if(who==="A") m.pointsA++; else m.pointsB++;
+
+    const w=gameWinner(m.pointsA,m.pointsB,m.pointsToWin);
+    if(w){
+      if(w==="A") m.gamesA++; else m.gamesB++;
+      m.pointsA=0; m.pointsB=0;
+      m.serverStart = (m.serverStart==="A") ? "B" : "A";
+      const needed=need(m.bestOf);
+      if(m.gamesA>=needed){ m.matchOver=true; m.winner="A"; }
+      if(m.gamesB>=needed){ m.matchOver=true; m.winner="B"; }
+    }
+  };
+  const swapServe=()=>(doc)=>{ const m=doc.match; m.serverStart=(m.serverStart==="A")?"B":"A"; };
+  const resetGame=()=>(doc)=>{ const m=doc.match; if(m.matchOver) return; m.pointsA=0; m.pointsB=0; };
+  const resetMatch=()=>(doc)=>{
+    const m=doc.match;
+    m.gamesA=0; m.gamesB=0; m.pointsA=0; m.pointsB=0;
+    m.matchOver=false; m.winner=null;
+    m.serverStart=m.serverStart||"A";
+  };
+
+  // settings
+  $("save").onclick=()=>{
+    st.pollMs=Math.max(1000, Number($("pollMs").value)||2500);
+    if(mode==="score") st.token=$("token").value.trim();
+    localStorage.setItem(LS, JSON.stringify(st));
+    $("pollTxt").textContent = st.pollMs + " ms";
+    $("hint").textContent = "Raw: " + rawUrl();
+    setNet(true,"Saved settings");
+  };
+
+  $("test").onclick=async ()=>{
+    try{
+      const doc = (mode==="score") ? (await readForWrite()).doc : await readWatch();
+      render(doc);
+      setNet(true,"Test OK");
+    }catch(e){
+      setNet(false, e.message || "Test failed");
+    }
+  };
+
+  // scorer buttons
+  if(mode==="score"){
+    $("btnA").onclick=()=>commit(addPoint("A"),"Point A");
+    $("btnB").onclick=()=>commit(addPoint("B"),"Point B");
+    $("btnSwap").onclick=()=>commit(swapServe(),"Swap serve");
+    $("btnResetGame").onclick=()=>confirm("Reset game to 0–0?") && commit(resetGame(),"Reset game");
+    $("btnResetMatch").onclick=()=>confirm("Reset match to 0?") && commit(resetMatch(),"Reset match");
+    $("btnReload").onclick=async ()=>{
+      try{ render((await readForWrite()).doc); setNet(true,"Reloaded"); }
+      catch(e){ setNet(false, e.message || "Reload failed"); }
+    };
+  }
+
+  // initial load + polling
+  $("hint").textContent = "Raw: " + rawUrl();
+  $("pollTxt").textContent = st.pollMs + " ms";
+
+  (async ()=>{
+    try{
+      const doc = (mode==="score") ? (await readForWrite()).doc : await readWatch();
+      render(doc);
+      setNet(true, mode==="score" ? "Ready" : "Watching");
+    }catch(e){
+      setNet(false, e.message || "Load error");
+    }
+  })();
+
+  if(mode==="watch"){
+    setInterval(async ()=>{
+      try{ render(await readWatch()); setNet(true,"Watching"); }
+      catch(e){ setNet(false, e.message || "Watch error"); }
+    }, st.pollMs);
+  }
+})();
+</script>
+</body>
+</html>
