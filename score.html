@@ -2,170 +2,643 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>TT Live Score</title>
+
   <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:0;background:#fff;color:#111}
-    .wrap{max-width:720px;margin:0 auto;padding:14px}
-    .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px}
-    .title{font-weight:900}
-    .sub{font-size:12px;color:#374151}
-    .pill{font-size:12px;color:#374151;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px;display:flex;gap:8px;align-items:center}
-    .dot{width:9px;height:9px;border-radius:999px;background:#9ca3af}
-    .dot.ok{background:#16a34a}.dot.bad{background:#dc2626}
-    .card{border:1px solid #e5e7eb;border-radius:14px;padding:12px;margin-top:12px}
-    .score{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
-    .side{border:1px solid #e5e7eb;border-radius:14px;padding:12px;background:#fafafa}
-    .name{display:flex;justify-content:space-between;align-items:center;font-weight:900}
-    .srv{font-size:12px;border:1px solid #e5e7eb;background:#fff;border-radius:999px;padding:3px 8px;color:#374151}
-    .pts{font-size:76px;font-weight:900;line-height:1;margin:8px 0;text-align:center}
-    .meta{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;color:#374151;font-size:13px;margin-top:6px}
-    .meta b{color:#111}
-    .btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-    .btnrow2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-    button{border:1px solid #e5e7eb;background:#fff;border-radius:12px;padding:12px;font-weight:900;font-size:16px;cursor:pointer}
-    button:disabled{opacity:.55;cursor:not-allowed}
-    .small{font-size:13px;padding:10px}
-    .danger{border-color:#fecaca;background:#fff5f5}
-    .form{display:grid;grid-template-columns:130px 1fr;gap:10px;align-items:center;margin-top:10px}
-    @media (max-width:520px){.form{grid-template-columns:1fr}}
-    input{border:1px solid #e5e7eb;border-radius:12px;padding:10px 12px;font-size:14px;width:100%}
-    .hint{font-size:12px;color:#374151;margin-top:10px;line-height:1.35}
-    .warn{border:1px solid #fecaca;background:#fff5f5;border-radius:12px;padding:10px;color:#7f1d1d;font-size:12px;margin-top:10px}
+    :root{
+      /* iPhone-safe spacing */
+      --pad-top: max(16px, env(safe-area-inset-top));
+      --pad-bot: max(18px, env(safe-area-inset-bottom));
+      --pad-x: 16px;
+
+      /* Watch-like palette (but iPhone-friendly) */
+      --bg: #0b0d12;
+      --panel: rgba(255,255,255,0.07);
+      --panel2: rgba(255,255,255,0.09);
+      --text: #f5f7ff;
+      --muted: rgba(245,247,255,0.7);
+      --muted2: rgba(245,247,255,0.55);
+
+      --blue: #2f6dff;
+      --orange:#ff9b2f;
+
+      --btn-blue: #2f6dff;
+      --btn-gray: rgba(255,255,255,0.12);
+
+      --shadow: 0 12px 40px rgba(0,0,0,0.35);
+      --radius: 18px;
+      --radius2: 22px;
+    }
+
+    /* NOTE: You previously asked to avoid dark mode.
+       This UI matches your screenshots (dark). If you want a light version,
+       tell me and I will flip variables. */
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      background: radial-gradient(1200px 800px at 50% -10%, rgba(47,109,255,0.35), transparent 55%),
+                  radial-gradient(900px 600px at 110% 10%, rgba(255,155,47,0.28), transparent 50%),
+                  var(--bg);
+      color:var(--text);
+      overflow:hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: var(--pad-top) var(--pad-x) var(--pad-bot);
+      gap: 14px;
+      max-width: 520px;          /* iPhone 15 Plus still looks great */
+      margin: 0 auto;
+    }
+
+    /* Top bar */
+    .top{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: var(--shadow);
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight: 900;
+      letter-spacing: 0.2px;
+    }
+    .brand .emoji{font-size:18px}
+    .status{
+      display:flex; align-items:center; gap:10px;
+      font-size:12px; color:var(--muted);
+      white-space:nowrap;
+    }
+    .dot{
+      width:9px;height:9px;border-radius:999px;background:#9ca3af;
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.06);
+    }
+    .dot.ok{background:#22c55e}
+    .dot.bad{background:#ef4444}
+
+    /* Pages container */
+    .pages{
+      flex:1;
+      position:relative;
+      border-radius: var(--radius2);
+      overflow:hidden;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: var(--shadow);
+    }
+    .track{
+      height:100%;
+      display:flex;
+      transform: translateX(0%);
+      transition: transform 220ms ease;
+      touch-action: pan-y;
+    }
+    .page{
+      width:100%;
+      flex: 0 0 100%;
+      padding: 16px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap: 14px;
+    }
+
+    /* Bottom dots */
+    .dots{
+      display:flex;
+      justify-content:center;
+      gap: 8px;
+      padding: 6px 0 2px;
+      opacity: 0.9;
+    }
+    .dots span{
+      width: 8px; height: 8px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.25);
+    }
+    .dots span.on{
+      background: rgba(255,255,255,0.85);
+    }
+
+    /* Watch-like buttons */
+    .bigbtn{
+      display:flex;
+      align-items:center;
+      justify-content:flex-start;
+      gap: 12px;
+      width:100%;
+      border: 0;
+      border-radius: 18px;
+      padding: 16px 16px;
+      font-weight: 900;
+      font-size: 18px;
+      color: #fff;
+      background: var(--btn-blue);
+      box-shadow: 0 10px 24px rgba(47,109,255,0.35);
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bigbtn.gray{
+      background: var(--btn-gray);
+      box-shadow:none;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text);
+    }
+    .bigbtn .icon{
+      width: 30px; height: 30px;
+      border-radius: 999px;
+      display:grid; place-items:center;
+      background: rgba(255,255,255,0.16);
+      font-size: 16px;
+    }
+
+    /* Setup fields */
+    .card{
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 18px;
+      padding: 14px;
+    }
+    .label{font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px}
+    .row{display:grid;grid-template-columns:1fr;gap:10px}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    input, select{
+      width:100%;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.20);
+      color: var(--text);
+      padding: 12px 12px;
+      font-size: 15px;
+      outline: none;
+    }
+    input::placeholder{color: rgba(245,247,255,0.45)}
+    .hint{font-size:12px;color:var(--muted2);line-height:1.35}
+
+    /* Live scoreboard (watch-like) */
+    .scoreGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap: 14px;
+      align-items:stretch;
+    }
+    .tile{
+      border-radius: 22px;
+      padding: 16px 14px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      min-height: 230px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow:hidden;
+    }
+    .tile.blue{
+      background: radial-gradient(600px 300px at 30% 10%, rgba(255,255,255,0.20), transparent 55%),
+                  var(--blue);
+    }
+    .tile.orange{
+      background: radial-gradient(600px 300px at 30% 10%, rgba(255,255,255,0.18), transparent 55%),
+                  var(--orange);
+      color:#111;
+    }
+    .pname{
+      font-weight: 900;
+      font-size: 15px;
+      letter-spacing:0.2px;
+      opacity:0.95;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+    }
+    .serveDot{
+      width: 10px;height: 10px;border-radius: 999px;
+      background: rgba(255,255,255,0.85);
+      box-shadow: 0 0 0 5px rgba(255,255,255,0.20);
+      opacity: 0;
+    }
+    .serveDot.on{opacity: 1}
+    .points{
+      font-weight: 1000;
+      font-size: 86px;
+      line-height: 1;
+      text-align:center;
+      margin-top: 10px;
+      letter-spacing: -1px;
+    }
+
+    /* middle undo */
+    .midRow{
+      display:flex;
+      justify-content:center;
+      margin-top: -6px;
+      margin-bottom: -2px;
+      pointer-events:none;
+    }
+    .undoBubble{
+      pointer-events:auto;
+      width: 44px; height: 44px;
+      border-radius: 999px;
+      display:grid;place-items:center;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: var(--shadow);
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .subStats{
+      display:grid;
+      grid-template-columns:1fr auto 1fr;
+      align-items:center;
+      gap: 12px;
+      margin-top: 6px;
+      padding: 10px 10px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    .stat{
+      text-align:center;
+      font-weight: 900;
+      letter-spacing:0.6px;
+    }
+    .stat .t{font-size:12px;color:var(--muted)}
+    .stat .v{font-size:20px;margin-top:4px}
+    .divider{
+      width:1px;height:32px;background: rgba(255,255,255,0.20);
+      border-radius: 9px;
+    }
+
+    /* Controls (scorer only) */
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .ctl{
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      font-weight: 900;
+      padding: 14px 12px;
+      font-size: 16px;
+      cursor:pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .ctl.danger{
+      background: rgba(239,68,68,0.18);
+      border-color: rgba(239,68,68,0.25);
+    }
+    .ctl:disabled{opacity:0.55;cursor:not-allowed}
+
+    /* Result page */
+    .resultTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap: 10px;
+      padding: 4px 2px 0;
+    }
+    .resultTop .done{
+      font-weight:900;
+      color: var(--muted);
+      cursor:pointer;
+      user-select:none;
+    }
+    .resultTop .time{
+      font-weight:900;
+      color: var(--muted);
+    }
+    .resultTitle{
+      text-align:center;
+      font-weight: 1000;
+      font-size: 34px;
+      letter-spacing: -0.4px;
+      margin-top: 6px;
+    }
+    .resultScore{
+      margin: 10px auto 8px;
+      display:flex; align-items:center; justify-content:center; gap: 12px;
+      font-weight: 1000;
+      font-size: 44px;
+      letter-spacing: -0.6px;
+    }
+    .pillA,.pillB{
+      padding: 10px 16px;
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+      min-width: 92px;
+      text-align:center;
+    }
+    .pillA{background: var(--blue)}
+    .pillB{background: var(--orange); color:#111}
+    .setsTitle{
+      font-weight: 1000;
+      margin-top: 10px;
+      color: var(--text);
+      letter-spacing: 0.8px;
+    }
+    .sets{
+      margin-top: 8px;
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+    }
+    .setRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items:center;
+      padding: 12px 12px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
+    }
+    .setLeft{
+      color: var(--muted);
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+    .setRight{
+      display:flex;
+      justify-content:flex-end;
+      gap: 10px;
+      font-weight: 1000;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Small helpers */
+    .hidden{display:none !important;}
   </style>
 </head>
+
 <body>
-<div class="wrap">
-  <div class="top">
-    <div>
-      <div class="title">TT Live Score</div>
-      <div class="sub" id="sub">…</div>
+  <div class="app">
+
+    <div class="top">
+      <div class="brand">
+        <span class="emoji">🏓</span>
+        <span>Table Tennis</span>
+      </div>
+      <div class="status">
+        <span class="dot" id="dot"></span>
+        <span id="net">Starting…</span>
+      </div>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-      <div class="pill"><span class="dot" id="dot"></span><span id="net">Starting…</span></div>
-      <div class="pill">Mode: <b id="modeTxt">…</b></div>
+
+    <div class="pages">
+      <div class="track" id="track">
+
+        <!-- PAGE 0: Start -->
+        <section class="page">
+          <div>
+            <div class="hint" style="margin:2px 2px 14px;">
+              <b id="roleText">watch</b> mode • Match: <b id="matchText">—</b>
+            </div>
+
+            <button class="bigbtn" id="btnStart">
+              <span class="icon">▶</span>
+              <span>Start game</span>
+            </button>
+
+            <div style="height:12px"></div>
+
+            <button class="bigbtn gray" id="btnSettings">
+              <span class="icon">⚙</span>
+              <span>Settings</span>
+            </button>
+
+            <div style="height:14px"></div>
+
+            <div class="hint">
+              Share the Watch link with anyone. Only the scorer can change the score.
+            </div>
+          </div>
+
+          <div>
+            <div class="hint" id="shareHint"></div>
+          </div>
+        </section>
+
+        <!-- PAGE 1: Setup -->
+        <section class="page">
+          <div class="card">
+            <div class="label">First player</div>
+            <input id="nameA" placeholder="Tanvi"/>
+
+            <div style="height:10px"></div>
+
+            <div class="label">Second player</div>
+            <input id="nameB" placeholder="Opponent"/>
+
+            <div style="height:10px"></div>
+
+            <div class="label">Who starts?</div>
+            <select id="starts">
+              <option value="A">First player starts</option>
+              <option value="B">Second player starts</option>
+            </select>
+
+            <div style="height:12px"></div>
+
+            <div class="row2">
+              <div>
+                <div class="label">Best of</div>
+                <select id="bestOf">
+                  <option value="3">3</option>
+                  <option value="5" selected>5</option>
+                  <option value="7">7</option>
+                </select>
+              </div>
+              <div>
+                <div class="label">Points</div>
+                <select id="ptWin">
+                  <option value="11" selected>11</option>
+                  <option value="21">21</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="height:12px"></div>
+
+            <div class="hint">
+              Scorer becomes the owner of this match automatically (Firebase Anonymous Auth).
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px;">
+            <button class="ctl" id="btnBackSetup" style="flex:1;">Back</button>
+            <button class="ctl" id="btnSaveSetup" style="flex:1;">Save</button>
+          </div>
+        </section>
+
+        <!-- PAGE 2: Live Score -->
+        <section class="page">
+          <div>
+            <div class="scoreGrid">
+              <div class="tile blue">
+                <div class="pname">
+                  <span id="aLabel">Player A</span>
+                  <span class="serveDot" id="aServe"></span>
+                </div>
+                <div class="points" id="aPts">0</div>
+              </div>
+
+              <div class="tile orange">
+                <div class="pname">
+                  <span id="bLabel">Player B</span>
+                  <span class="serveDot" id="bServe"></span>
+                </div>
+                <div class="points" id="bPts">0</div>
+              </div>
+            </div>
+
+            <div class="midRow">
+              <div class="undoBubble" id="btnUndo" title="Undo">↩</div>
+            </div>
+
+            <div class="subStats">
+              <div class="stat">
+                <div class="t">GAMES</div>
+                <div class="v" id="games">0:0</div>
+              </div>
+              <div class="divider"></div>
+              <div class="stat">
+                <div class="t">MATCHES</div>
+                <div class="v" id="matches">0:0</div>
+              </div>
+            </div>
+          </div>
+
+          <div id="scorerControls" class="controls hidden">
+            <button class="ctl" id="btnPlusA">+1 (A)</button>
+            <button class="ctl" id="btnPlusB">+1 (B)</button>
+            <button class="ctl" id="btnSwap">Swap serve</button>
+            <button class="ctl danger" id="btnEnd">End match</button>
+          </div>
+
+          <div id="watchControls" class="hint hidden">
+            Watching live. No refresh needed.
+          </div>
+        </section>
+
+        <!-- PAGE 3: Result -->
+        <section class="page">
+          <div>
+            <div class="resultTop">
+              <div class="done" id="btnDone">Done</div>
+              <div class="time" id="clock">--:--</div>
+            </div>
+
+            <div class="resultTitle">Result</div>
+            <div class="resultScore">
+              <div class="pillA" id="resA">0</div>
+              <div style="opacity:0.75">:</div>
+              <div class="pillB" id="resB">0</div>
+            </div>
+
+            <div class="setsTitle">SETS</div>
+            <div class="sets" id="sets"></div>
+          </div>
+
+          <div>
+            <button class="ctl" id="btnBackToScore">Back to score</button>
+          </div>
+        </section>
+
+      </div>
     </div>
+
+    <div class="dots" id="dots">
+      <span class="on"></span><span></span><span></span><span></span>
+    </div>
+
   </div>
 
-  <div class="card">
-    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center">
-      <div style="font-weight:900" id="statusLine">Match</div>
-      <div style="font-size:12px;color:#374151" id="updated">—</div>
-    </div>
-
-    <div class="score">
-      <div class="side">
-        <div class="name"><span id="aName">Player A</span><span class="srv" id="aSrv" style="display:none">SERVE</span></div>
-        <div class="pts" id="aPts">0</div>
-      </div>
-      <div class="side">
-        <div class="name"><span id="bName">Player B</span><span class="srv" id="bSrv" style="display:none">SERVE</span></div>
-        <div class="pts" id="bPts">0</div>
-      </div>
-    </div>
-
-    <div class="meta">
-      <span>Games: <b id="games">0–0</b></span>
-      <span>•</span>
-      <span>Best of <b id="bestOf">5</b></span>
-      <span>•</span>
-      <span>To <b id="ptWin">11</b></span>
-      <span id="over" style="display:none">• <b>Match Over</b></span>
-    </div>
-
-    <div id="scorerUI" style="display:none">
-      <div class="btnrow">
-        <button id="btnA">+1 A</button>
-        <button id="btnB">+1 B</button>
-      </div>
-      <div class="btnrow2">
-        <button class="small" id="btnSwap">Swap Serve</button>
-        <button class="small danger" id="btnResetGame">Reset Game</button>
-        <button class="small danger" id="btnResetMatch">Reset Match</button>
-        <button class="small" id="btnUndo">Undo</button>
-      </div>
-      <div class="hint">Only the scorer can change the score. Watchers update live.</div>
-    </div>
-
-    <div id="watchUI" class="hint" style="display:none">
-      Watch mode is read-only. Updates are live.
-    </div>
-  </div>
-
-  <div class="card">
-    <div style="font-weight:900">Match Setup</div>
-
-    <div class="form"><div style="color:#374151;font-weight:900">Match ID</div><input id="matchId" placeholder="Example: tanvi-2026-02-20"></div>
-
-    <div class="form"><div style="color:#374151;font-weight:900">Name A</div><input id="nameA" placeholder="Tanvi"></div>
-    <div class="form"><div style="color:#374151;font-weight:900">Name B</div><input id="nameB" placeholder="Opponent"></div>
-
-    <div class="form"><div style="color:#374151;font-weight:900">Best of</div><input id="bestOfIn" type="number" min="1" step="2" value="5"></div>
-    <div class="form"><div style="color:#374151;font-weight:900">Points to win</div><input id="ptWinIn" type="number" min="1" value="11"></div>
-
-    <div id="pinBox" style="display:none">
-      <div class="form"><div style="color:#374151;font-weight:900">PIN</div><input id="pin" type="password" inputmode="numeric" placeholder="4 digits"></div>
-      <div class="warn">Scorer only. Remember this PIN. Watchers do not need it.</div>
-    </div>
-
-    <div class="btnrow2" style="margin-top:12px">
-      <button class="small" id="saveSetup">Save</button>
-      <button class="small" id="copyWatch">Copy Watch Link</button>
-      <button class="small" id="copyScore">Copy Score Link</button>
-      <button class="small" id="newMatch">New Match (reset)</button>
-    </div>
-
-    <div class="hint" id="hint"></div>
-  </div>
-</div>
-
-<!-- Firebase (Realtime Database) via CDN -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, onValue, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   // =========================
   // PASTE YOUR firebaseConfig HERE
   // =========================
   const firebaseConfig = {
-      apiKey: "AIzaSyD221i61Z824UbXSLRT-UZs7w60KNzh5nY",
-  authDomain: "ttfl-live-score.firebaseapp.com",
-  databaseURL: "https://ttfl-live-score-default-rtdb.firebaseio.com",
-  projectId: "ttfl-live-score",
-  storageBucket: "ttfl-live-score.firebasestorage.app",
-  messagingSenderId: "698939580201",
-  appId: "1:698939580201:web:80540510de083f676ce138"
+    // Replace with your real config:
+    // apiKey: "...",
+    // authDomain: "...",
+    // databaseURL: "...",
+    // projectId: "...",
+    // storageBucket: "...",
+    // messagingSenderId: "...",
+    // appId: "..."
   };
 
   const app = initializeApp(firebaseConfig);
-  const db  = getDatabase(app);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
 
   const $ = (id) => document.getElementById(id);
 
+  // role + match
   const params = new URL(location.href).searchParams;
   const role = (params.get("role") || "watch").toLowerCase() === "scorer" ? "scorer" : "watch";
+  const matchId = (params.get("match") || "tanvi").trim();
 
-  $("modeTxt").textContent = role;
-  $("sub").textContent = role === "scorer" ? "Scorer updates • Watchers see live" : "Watching live score";
-  $("scorerUI").style.display = role === "scorer" ? "block" : "none";
-  $("watchUI").style.display  = role === "watch"  ? "block" : "none";
-  $("pinBox").style.display   = role === "scorer" ? "block" : "none";
+  $("roleText").textContent = role;
+  $("matchText").textContent = matchId;
 
-  const LS = "tt_fb_simple_v1";
-  const saved = JSON.parse(localStorage.getItem(LS) || "{}");
+  // UI routing
+  const track = $("track");
+  const dots = [...$("dots").querySelectorAll("span")];
+  let pageIndex = 0;
 
-  $("matchId").value = params.get("match") || saved.matchId || "tanvi";
-  $("nameA").value   = saved.nameA || "Player A";
-  $("nameB").value   = saved.nameB || "Player B";
-  $("bestOfIn").value= saved.bestOf || 5;
-  $("ptWinIn").value = saved.ptWin || 11;
-  $("pin").value     = saved.pin || "";
+  function goto(i){
+    pageIndex = Math.max(0, Math.min(3, i));
+    track.style.transform = `translateX(${-100*pageIndex}%)`;
+    dots.forEach((d,idx)=>d.classList.toggle("on", idx===pageIndex));
+  }
 
-  const setNet = (ok, msg) => {
+  $("btnStart").onclick = () => goto(2);
+  $("btnSettings").onclick = () => goto(1);
+  $("btnBackSetup").onclick = () => goto(0);
+  $("btnBackToScore").onclick = () => goto(2);
+  $("btnDone").onclick = () => goto(0);
+
+  // show controls by role
+  $("scorerControls").classList.toggle("hidden", role !== "scorer");
+  $("watchControls").classList.toggle("hidden", role !== "watch");
+
+  // network dot
+  function setNet(ok,msg){
     $("dot").className = "dot " + (ok ? "ok" : "bad");
     $("net").textContent = msg;
-  };
+  }
 
+  // match ref
+  const mref = ref(db, `matches/${matchId}`);
+
+  // state
+  let uid = null;
+  let last = null;
+
+  function nowIso(){ return new Date().toISOString(); }
   function need(bestOf){ return Math.floor(bestOf/2)+1; }
   function gameWinner(a,b,ptWin){
     const max=Math.max(a,b), min=Math.min(a,b);
@@ -174,279 +647,271 @@
     return a>b ? "A" : "B";
   }
   function computeServer(m){
-    const total=m.pointsA+m.pointsB;
-    const deuce=(m.pointsA>=m.pointsToWin-1)&&(m.pointsB>=m.pointsToWin-1);
-    const period=deuce?1:2;
-    const start=m.serverStart || "A";
-    const flips=Math.floor(total/period);
-    return (flips%2===0)?start:(start==="A"?"B":"A");
+    const total = m.pointsA + m.pointsB;
+    const deuce = (m.pointsA >= m.pointsToWin-1) && (m.pointsB >= m.pointsToWin-1);
+    const period = deuce ? 1 : 2;
+    const flips = Math.floor(total / period);
+    const start = m.serverStart || "A";
+    return (flips % 2 === 0) ? start : (start==="A" ? "B" : "A");
   }
 
-  function render(state){
-    const m = state.match;
-    $("aName").textContent = m.teamAName;
-    $("bName").textContent = m.teamBName;
-    $("aPts").textContent  = m.pointsA;
-    $("bPts").textContent  = m.pointsB;
-    $("games").textContent = `${m.gamesA}–${m.gamesB}`;
-    $("bestOf").textContent= m.bestOf;
-    $("ptWin").textContent = m.pointsToWin;
+  function render(s){
+    if(!s || !s.match) return;
+    const m = s.match;
+
+    $("nameA").value = $("nameA").value || m.teamAName || "Player A";
+    $("nameB").value = $("nameB").value || m.teamBName || "Player B";
+
+    $("aLabel").textContent = m.teamAName || "Player A";
+    $("bLabel").textContent = m.teamBName || "Player B";
+
+    $("aPts").textContent = m.pointsA ?? 0;
+    $("bPts").textContent = m.pointsB ?? 0;
+
+    $("games").textContent = `${m.gamesA ?? 0}:${m.gamesB ?? 0}`;
+    $("matches").textContent = `${m.matchesA ?? 0}:${m.matchesB ?? 0}`;
 
     const srv = computeServer(m);
-    $("aSrv").style.display = srv==="A" ? "inline-block" : "none";
-    $("bSrv").style.display = srv==="B" ? "inline-block" : "none";
+    $("aServe").classList.toggle("on", srv==="A");
+    $("bServe").classList.toggle("on", srv==="B");
 
-    $("over").style.display = m.matchOver ? "inline" : "none";
-    $("statusLine").textContent = m.matchOver ? `Winner: ${m.winner}` : "Match";
-    $("updated").textContent = state.updatedAt ? `Updated: ${new Date(state.updatedAt).toLocaleString()}` : "—";
-  }
+    // Result page
+    $("resA").textContent = (m.matchesA ?? 0);
+    $("resB").textContent = (m.matchesB ?? 0);
 
-  function nowIso(){ return new Date().toISOString(); }
-
-  function matchRef(){
-    return ref(db, `matches/${$("matchId").value.trim()}`);
-  }
-
-  async function ensureMatchExists(){
-    const snap = await get(matchRef());
-    if (snap.exists()) return snap.val();
-
-    // First-time create (pin required for scorer)
-    const pin = ($("pin").value || "").trim();
-    if (role === "scorer" && pin.length < 4) {
-      throw new Error("Enter a 4-digit PIN to create the match.");
+    const setsEl = $("sets");
+    setsEl.innerHTML = "";
+    const sets = Array.isArray(s.sets) ? s.sets : [];
+    for(const st of sets){
+      const row = document.createElement("div");
+      row.className = "setRow";
+      row.innerHTML = `
+        <div class="setLeft">${st.duration || ""}</div>
+        <div class="setRight"><span>${st.a}</span><span style="opacity:.6">:</span><span>${st.b}</span></div>
+      `;
+      setsEl.appendChild(row);
     }
 
-    const bestOf = Number($("bestOfIn").value || 5);
-    const ptWin  = Number($("ptWinIn").value || 11);
+    if(m.matchOver){
+      goto(3);
+    }
+  }
+
+  // Create match (scorer only)
+  async function ensureMatch(){
+    const snap = await get(mref);
+    if(snap.exists()) return snap.val();
+
+    if(role !== "scorer") {
+      setNet(false,"Match not found yet");
+      return null;
+    }
+    if(!uid) throw new Error("Scorer not authenticated yet.");
 
     const init = {
-      pin: role === "scorer" ? pin : null,
+      ownerUid: uid,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
       match: {
         teamAName: ($("nameA").value || "Player A").trim(),
         teamBName: ($("nameB").value || "Player B").trim(),
-        bestOf,
-        pointsToWin: ptWin,
-        gamesA: 0, gamesB: 0,
+        bestOf: Number($("bestOf").value || 5),
+        pointsToWin: Number($("ptWin").value || 11),
+        serverStart: ($("starts").value || "A"),
         pointsA: 0, pointsB: 0,
-        serverStart: "A",
+        gamesA: 0, gamesB: 0,
+        matchesA: 0, matchesB: 0,
         matchOver: false,
         winner: ""
       },
-      history: [],
-      updatedAt: nowIso()
+      sets: [],
+      history: []
     };
 
-    await set(matchRef(), init);
+    await set(mref, init);
     return init;
   }
 
-  async function writeState(nextState){
-    // PIN enforcement (very simple)
-    const pin = ($("pin").value || "").trim();
-    const snap = await get(matchRef());
-    if (!snap.exists()) throw new Error("Match not found. Click Save to create it.");
+  // Save setup (names / rules)
+  $("btnSaveSetup").onclick = async () => {
+    try{
+      if(role !== "scorer") { goto(2); return; }
+      const cur = await ensureMatch();
+      if(!cur) return;
 
-    const current = snap.val();
-    const storedPin = current.pin;
-
-    if (role === "scorer") {
-      if (!storedPin) throw new Error("Match has no PIN set.");
-      if (pin !== storedPin) throw new Error("Wrong PIN.");
-    } else {
-      throw new Error("Watchers cannot write.");
+      await update(mref, {
+        updatedAt: nowIso(),
+        match: {
+          ...cur.match,
+          teamAName: ($("nameA").value || "Player A").trim(),
+          teamBName: ($("nameB").value || "Player B").trim(),
+          bestOf: Number($("bestOf").value || 5),
+          pointsToWin: Number($("ptWin").value || 11),
+          serverStart: ($("starts").value || "A"),
+        }
+      });
+      setNet(true,"Saved");
+      goto(2);
+    }catch(e){
+      setNet(false, e.message || "Save failed");
+      alert(e.message || "Save failed");
     }
+  };
 
-    await set(matchRef(), nextState);
-  }
+  // Share links
+  const base = new URL(location.href);
+  base.searchParams.set("match", matchId);
+  const watchUrl = new URL(base); watchUrl.searchParams.set("role","watch");
+  const scoreUrl = new URL(base); scoreUrl.searchParams.set("role","scorer");
+  $("shareHint").textContent = `Watch: ${watchUrl.toString()}`;
 
-  function pushHistory(state){
-    const h = Array.isArray(state.history) ? state.history : [];
-    h.push({
-      pointsA: state.match.pointsA,
-      pointsB: state.match.pointsB,
-      gamesA: state.match.gamesA,
-      gamesB: state.match.gamesB,
-      serverStart: state.match.serverStart,
-      matchOver: state.match.matchOver,
-      winner: state.match.winner,
+  // History + write helper (scorer only)
+  async function change(mutator){
+    if(role !== "scorer") return;
+    const snap = await get(mref);
+    if(!snap.exists()) throw new Error("Match does not exist yet. Save setup first.");
+    const s = snap.val();
+    if(s.ownerUid !== uid) throw new Error("Another scorer owns this match.");
+
+    s.history = Array.isArray(s.history) ? s.history : [];
+    s.history.push({
+      match: { ...s.match },
+      sets: Array.isArray(s.sets) ? [...s.sets] : [],
       at: nowIso()
     });
-    while (h.length > 30) h.shift();
-    state.history = h;
+    while(s.history.length > 40) s.history.shift();
+
+    mutator(s);
+
+    s.updatedAt = nowIso();
+    await set(mref, s);
   }
 
-  async function change(mutator){
-    const snap = await get(matchRef());
-    if (!snap.exists()) throw new Error("Match not found. Click Save to create it.");
-    const state = snap.val();
-
-    pushHistory(state);
-    mutator(state);
-
-    state.updatedAt = nowIso();
-    await writeState(state);
-  }
-
-  // Buttons (scorer)
-  $("btnA").onclick = () => safe(() => change((s)=>{
+  // Buttons
+  $("btnPlusA").onclick = () => change((s)=>{
     const m = s.match;
-    if (m.matchOver) return;
+    if(m.matchOver) return;
     m.pointsA++;
     const w = gameWinner(m.pointsA, m.pointsB, m.pointsToWin);
-    if (w){
-      if (w==="A") m.gamesA++; else m.gamesB++;
+    if(w){
+      // record set
+      s.sets = Array.isArray(s.sets) ? s.sets : [];
+      s.sets.push({ duration:"", a:m.pointsA, b:m.pointsB });
+
+      if(w==="A") m.gamesA++; else m.gamesB++;
       m.pointsA = 0; m.pointsB = 0;
       m.serverStart = (m.serverStart==="A") ? "B" : "A";
-      const needed = need(m.bestOf);
-      if (m.gamesA >= needed){ m.matchOver = true; m.winner = m.teamAName; }
-      if (m.gamesB >= needed){ m.matchOver = true; m.winner = m.teamBName; }
-    }
-  }));
 
-  $("btnB").onclick = () => safe(() => change((s)=>{
+      const needed = need(m.bestOf);
+      if(m.gamesA >= needed){ m.matchesA++; m.matchOver=true; m.winner=m.teamAName; }
+      if(m.gamesB >= needed){ m.matchesB++; m.matchOver=true; m.winner=m.teamBName; }
+    }
+  });
+
+  $("btnPlusB").onclick = () => change((s)=>{
     const m = s.match;
-    if (m.matchOver) return;
+    if(m.matchOver) return;
     m.pointsB++;
     const w = gameWinner(m.pointsA, m.pointsB, m.pointsToWin);
-    if (w){
-      if (w==="A") m.gamesA++; else m.gamesB++;
+    if(w){
+      s.sets = Array.isArray(s.sets) ? s.sets : [];
+      s.sets.push({ duration:"", a:m.pointsA, b:m.pointsB });
+
+      if(w==="A") m.gamesA++; else m.gamesB++;
       m.pointsA = 0; m.pointsB = 0;
       m.serverStart = (m.serverStart==="A") ? "B" : "A";
+
       const needed = need(m.bestOf);
-      if (m.gamesA >= needed){ m.matchOver = true; m.winner = m.teamAName; }
-      if (m.gamesB >= needed){ m.matchOver = true; m.winner = m.teamBName; }
+      if(m.gamesA >= needed){ m.matchesA++; m.matchOver=true; m.winner=m.teamAName; }
+      if(m.gamesB >= needed){ m.matchesB++; m.matchOver=true; m.winner=m.teamBName; }
     }
-  }));
-
-  $("btnSwap").onclick = () => safe(() => change((s)=>{
-    const m = s.match;
-    m.serverStart = (m.serverStart==="A") ? "B" : "A";
-  }));
-
-  $("btnResetGame").onclick = () => confirm("Reset current game to 0–0?") && safe(() => change((s)=>{
-    const m = s.match;
-    if (m.matchOver) return;
-    m.pointsA = 0; m.pointsB = 0;
-  }));
-
-  $("btnResetMatch").onclick = () => confirm("Reset match to 0?") && safe(() => change((s)=>{
-    const m = s.match;
-    m.gamesA = 0; m.gamesB = 0;
-    m.pointsA = 0; m.pointsB = 0;
-    m.matchOver = false;
-    m.winner = "";
-    m.serverStart = "A";
-  }));
-
-  $("btnUndo").onclick = () => safe(async () => {
-    const snap = await get(matchRef());
-    if (!snap.exists()) throw new Error("Match not found.");
-    const state = snap.val();
-    const h = Array.isArray(state.history) ? state.history : [];
-    const last = h.pop();
-    if (!last) return;
-
-    state.match.pointsA = last.pointsA;
-    state.match.pointsB = last.pointsB;
-    state.match.gamesA  = last.gamesA;
-    state.match.gamesB  = last.gamesB;
-    state.match.serverStart = last.serverStart;
-    state.match.matchOver = last.matchOver;
-    state.match.winner = last.winner;
-
-    state.history = h;
-    state.updatedAt = nowIso();
-    await writeState(state);
   });
 
-  // Setup buttons
-  $("saveSetup").onclick = () => safe(async () => {
-    const matchId = $("matchId").value.trim();
-    if (!matchId) throw new Error("Match ID is required.");
-
-    // Save local
-    localStorage.setItem(LS, JSON.stringify({
-      matchId,
-      nameA: $("nameA").value.trim(),
-      nameB: $("nameB").value.trim(),
-      bestOf: Number($("bestOfIn").value || 5),
-      ptWin:  Number($("ptWinIn").value || 11),
-      pin: $("pin").value.trim()
-    }));
-
-    const state = await ensureMatchExists();
-
-    // Update names/config (scorer only)
-    if (role === "scorer") {
-      await change((s)=>{
-        s.match.teamAName = ($("nameA").value || "Player A").trim();
-        s.match.teamBName = ($("nameB").value || "Player B").trim();
-        s.match.bestOf = Number($("bestOfIn").value || 5);
-        s.match.pointsToWin = Number($("ptWinIn").value || 11);
-      });
-    }
-
-    setNet(true, "Match ready");
-    $("hint").textContent = "Listening to: matches/" + matchId;
-  });
-
-  function buildUrl(roleName){
-    const u = new URL(location.href);
-    u.searchParams.set("role", roleName);
-    u.searchParams.set("match", $("matchId").value.trim());
-    // Do NOT include pin in URL
-    return u.toString();
-  }
-
-  $("copyWatch").onclick = async () => {
-    await navigator.clipboard.writeText(buildUrl("watch"));
-    setNet(true, "Watch link copied");
-  };
-
-  $("copyScore").onclick = async () => {
-    await navigator.clipboard.writeText(buildUrl("scorer"));
-    setNet(true, "Score link copied");
-  };
-
-  $("newMatch").onclick = () => {
-    localStorage.removeItem(LS);
-    location.href = location.pathname + "?role=" + role;
-  };
-
-  // Live subscribe
-  function subscribe(){
-    const id = $("matchId").value.trim();
-    if (!id) return;
-
-    const r = matchRef();
-    onValue(r, (snap) => {
-      if (!snap.exists()) {
-        setNet(false, "Match not found");
-        return;
-      }
-      render(snap.val());
-      setNet(true, "Live");
-    }, (err) => {
-      setNet(false, err?.message || "Listen error");
-    });
-
-    $("hint").textContent = "Listening to: matches/" + id;
-  }
-
-  async function safe(fn){
+  $("btnUndo").onclick = async () => {
     try{
-      $("net").textContent = "Working…";
-      await fn();
+      if(role !== "scorer") return;
+      const snap = await get(mref);
+      if(!snap.exists()) return;
+      const s = snap.val();
+      if(s.ownerUid !== uid) throw new Error("Another scorer owns this match.");
+      const h = Array.isArray(s.history) ? s.history : [];
+      const prev = h.pop();
+      if(!prev) return;
+      s.match = prev.match;
+      s.sets = prev.sets;
+      s.history = h;
+      s.updatedAt = nowIso();
+      await set(mref, s);
     }catch(e){
-      setNet(false, e.message || "Error");
-      alert(e.message || "Error");
+      setNet(false, e.message || "Undo failed");
+      alert(e.message || "Undo failed");
     }
+  };
+
+  $("btnSwap").onclick = () => change((s)=>{
+    s.match.serverStart = (s.match.serverStart==="A") ? "B" : "A";
+  });
+
+  $("btnEnd").onclick = () => change((s)=>{
+    s.match.matchOver = true;
+    s.match.winner = (s.match.gamesA > s.match.gamesB) ? s.match.teamAName : s.match.teamBName;
+  });
+
+  // Clock on result page
+  setInterval(()=>{
+    const d = new Date();
+    const hh = String(d.getHours()%12 || 12).padStart(1,"0");
+    const mm = String(d.getMinutes()).padStart(2,"0");
+    $("clock").textContent = `${hh}:${mm}`;
+  }, 1000);
+
+  // Auth + subscribe
+  if(role === "scorer"){
+    setNet(true,"Signing in…");
+    signInAnonymously(auth).catch((e)=>{
+      setNet(false, e.message || "Auth failed");
+      alert(e.message || "Auth failed");
+    });
+  } else {
+    setNet(true,"Watching…");
   }
 
-  // Auto-start
-  subscribe();
-  setNet(true, "Ready");
+  onAuthStateChanged(auth, async (user)=>{
+    uid = user?.uid || null;
+    if(role === "scorer" && uid){
+      setNet(true,"Scorer ready");
+      try{ await ensureMatch(); } catch {}
+    }
+  });
+
+  onValue(mref, (snap)=>{
+    if(!snap.exists()){
+      setNet(false, "Match not found");
+      return;
+    }
+    last = snap.val();
+    render(last);
+    setNet(true, "Live");
+  }, (err)=>{
+    setNet(false, err?.message || "Listen error");
+  });
+
+  // Start page
+  goto(0);
+
+  // Optional: swipe pages
+  let x0 = null;
+  track.addEventListener("touchstart",(e)=>{ x0 = e.touches[0].clientX; },{passive:true});
+  track.addEventListener("touchmove",(e)=>{
+    if(x0==null) return;
+    const dx = e.touches[0].clientX - x0;
+    if(Math.abs(dx) > 60){
+      goto(pageIndex + (dx < 0 ? 1 : -1));
+      x0 = null;
+    }
+  },{passive:true});
+  track.addEventListener("touchend",()=>{ x0=null; },{passive:true});
+
 </script>
 </body>
 </html>
