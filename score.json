@@ -1,17 +1,18 @@
 {
-  "updatedAt": "1970-01-01T00:00:00.000Z",
-  "updatedBy": "init",
+  "updatedAt": "2026-02-21T04:51:45.722Z",
+  "updatedBy": "c_8461e8d3f0381",
   "match": {
     "bestOf": 5,
     "pointsToWin": 11,
-    "teamAName": "Player A",
-    "teamBName": "Player B",
+    "teamAName": "Tanvi",
+    "teamBName": "Aarav",
     "gamesA": 0,
     "gamesB": 0,
     "pointsA": 0,
     "pointsB": 0,
     "server": "A",
     "matchOver": false,
-    "winner": null
+    "winner": null,
+    "serverStart": "A"
   }
 }
