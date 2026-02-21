@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-21T05:01:43.009Z",
+  "updatedAt": "2026-02-21T05:04:38.554Z",
   "updatedBy": "scorer",
   "match": {
     "bestOf": 5,
@@ -8,7 +8,7 @@
     "teamBName": "Aarav",
     "gamesA": 0,
     "gamesB": 0,
-    "pointsA": 1,
+    "pointsA": 2,
     "pointsB": 3,
     "server": "A",
     "matchOver": false,
