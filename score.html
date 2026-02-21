@@ -3,46 +3,40 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>TT Live Score</title>
-
+  <title>TTFL Live Score</title>
   <style>
     :root{
-      /* iPhone-safe spacing */
-      --pad-top: max(16px, env(safe-area-inset-top));
-      --pad-bot: max(18px, env(safe-area-inset-bottom));
-      --pad-x: 16px;
+      --pad-top: max(14px, env(safe-area-inset-top));
+      --pad-bot: max(16px, env(safe-area-inset-bottom));
+      --pad-x: 14px;
 
-      /* Watch-like palette (but iPhone-friendly) */
-      --bg: #0b0d12;
+      --bg:#0b0d12;
       --panel: rgba(255,255,255,0.07);
       --panel2: rgba(255,255,255,0.09);
-      --text: #f5f7ff;
-      --muted: rgba(245,247,255,0.7);
+      --text:#f5f7ff;
+      --muted: rgba(245,247,255,0.70);
       --muted2: rgba(245,247,255,0.55);
 
-      --blue: #2f6dff;
+      --blue:#2f6dff;
       --orange:#ff9b2f;
 
-      --btn-blue: #2f6dff;
-      --btn-gray: rgba(255,255,255,0.12);
+      --btn: rgba(255,255,255,0.10);
+      --btn2: rgba(255,255,255,0.14);
 
-      --shadow: 0 12px 40px rgba(0,0,0,0.35);
-      --radius: 18px;
-      --radius2: 22px;
+      --shadow: 0 14px 40px rgba(0,0,0,0.40);
+      --r:18px;
+      --r2:22px;
     }
-
-    /* NOTE: You previously asked to avoid dark mode.
-       This UI matches your screenshots (dark). If you want a light version,
-       tell me and I will flip variables. */
 
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0;
       font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial;
-      background: radial-gradient(1200px 800px at 50% -10%, rgba(47,109,255,0.35), transparent 55%),
-                  radial-gradient(900px 600px at 110% 10%, rgba(255,155,47,0.28), transparent 50%),
-                  var(--bg);
+      background:
+        radial-gradient(1200px 800px at 50% -10%, rgba(47,109,255,0.32), transparent 55%),
+        radial-gradient(900px 600px at 110% 10%, rgba(255,155,47,0.25), transparent 50%),
+        var(--bg);
       color:var(--text);
       overflow:hidden;
       -webkit-font-smoothing: antialiased;
@@ -54,532 +48,389 @@
       display:flex;
       flex-direction:column;
       padding: var(--pad-top) var(--pad-x) var(--pad-bot);
-      gap: 14px;
-      max-width: 520px;          /* iPhone 15 Plus still looks great */
+      gap: 12px;
+      max-width: 520px;
       margin: 0 auto;
     }
 
-    /* Top bar */
     .top{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap: 12px;
+      gap: 10px;
       padding: 10px 12px;
       border-radius: 16px;
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.10);
       box-shadow: var(--shadow);
     }
-    .brand{
-      display:flex; align-items:center; gap:10px;
-      font-weight: 900;
+    .title{
+      font-weight: 950;
       letter-spacing: 0.2px;
+      font-size: 14px;
+      line-height: 1.15;
     }
-    .brand .emoji{font-size:18px}
+    .sub{
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 800;
+      margin-top: 2px;
+    }
     .status{
-      display:flex; align-items:center; gap:10px;
+      display:flex; align-items:center; gap:8px;
       font-size:12px; color:var(--muted);
       white-space:nowrap;
     }
-    .dot{
-      width:9px;height:9px;border-radius:999px;background:#9ca3af;
-      box-shadow: 0 0 0 3px rgba(255,255,255,0.06);
-    }
+    .dot{width:9px;height:9px;border-radius:999px;background:#9ca3af}
     .dot.ok{background:#22c55e}
     .dot.bad{background:#ef4444}
 
-    /* Pages container */
     .pages{
       flex:1;
-      position:relative;
-      border-radius: var(--radius2);
+      border-radius: var(--r2);
       overflow:hidden;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.10);
       box-shadow: var(--shadow);
+      position:relative;
     }
     .track{
       height:100%;
       display:flex;
       transform: translateX(0%);
       transition: transform 220ms ease;
-      touch-action: pan-y;
     }
     .page{
       width:100%;
       flex: 0 0 100%;
-      padding: 16px;
+      padding: 14px;
       display:flex;
       flex-direction:column;
       justify-content:space-between;
-      gap: 14px;
-    }
-
-    /* Bottom dots */
-    .dots{
-      display:flex;
-      justify-content:center;
-      gap: 8px;
-      padding: 6px 0 2px;
-      opacity: 0.9;
-    }
-    .dots span{
-      width: 8px; height: 8px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.25);
-    }
-    .dots span.on{
-      background: rgba(255,255,255,0.85);
-    }
-
-    /* Watch-like buttons */
-    .bigbtn{
-      display:flex;
-      align-items:center;
-      justify-content:flex-start;
       gap: 12px;
-      width:100%;
-      border: 0;
-      border-radius: 18px;
-      padding: 16px 16px;
-      font-weight: 900;
-      font-size: 18px;
-      color: #fff;
-      background: var(--btn-blue);
-      box-shadow: 0 10px 24px rgba(47,109,255,0.35);
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .bigbtn.gray{
-      background: var(--btn-gray);
-      box-shadow:none;
-      border: 1px solid rgba(255,255,255,0.12);
-      color: var(--text);
-    }
-    .bigbtn .icon{
-      width: 30px; height: 30px;
-      border-radius: 999px;
-      display:grid; place-items:center;
-      background: rgba(255,255,255,0.16);
-      font-size: 16px;
     }
 
-    /* Setup fields */
     .card{
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.10);
       border-radius: 18px;
       padding: 14px;
     }
-    .label{font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px}
-    .row{display:grid;grid-template-columns:1fr;gap:10px}
-    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .label{font-size:12px;color:var(--muted);font-weight:900;margin-bottom:6px}
     input, select{
       width:100%;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(0,0,0,0.20);
+      background: rgba(0,0,0,0.22);
       color: var(--text);
       padding: 12px 12px;
       font-size: 15px;
-      outline: none;
+      outline:none;
     }
     input::placeholder{color: rgba(245,247,255,0.45)}
+    .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .hint{font-size:12px;color:var(--muted2);line-height:1.35}
 
-    /* Live scoreboard (watch-like) */
-    .scoreGrid{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap: 14px;
-      align-items:stretch;
-    }
-    .tile{
-      border-radius: 22px;
-      padding: 16px 14px;
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-      min-height: 230px;
-      box-shadow: var(--shadow);
-      position: relative;
-      overflow:hidden;
-    }
-    .tile.blue{
-      background: radial-gradient(600px 300px at 30% 10%, rgba(255,255,255,0.20), transparent 55%),
-                  var(--blue);
-    }
-    .tile.orange{
-      background: radial-gradient(600px 300px at 30% 10%, rgba(255,255,255,0.18), transparent 55%),
-                  var(--orange);
-      color:#111;
-    }
-    .pname{
-      font-weight: 900;
-      font-size: 15px;
-      letter-spacing:0.2px;
-      opacity:0.95;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:10px;
-    }
-    .serveDot{
-      width: 10px;height: 10px;border-radius: 999px;
-      background: rgba(255,255,255,0.85);
-      box-shadow: 0 0 0 5px rgba(255,255,255,0.20);
-      opacity: 0;
-    }
-    .serveDot.on{opacity: 1}
-    .points{
-      font-weight: 1000;
-      font-size: 86px;
-      line-height: 1;
-      text-align:center;
-      margin-top: 10px;
-      letter-spacing: -1px;
-    }
-
-    /* middle undo */
-    .midRow{
-      display:flex;
-      justify-content:center;
-      margin-top: -6px;
-      margin-bottom: -2px;
-      pointer-events:none;
-    }
-    .undoBubble{
-      pointer-events:auto;
-      width: 44px; height: 44px;
-      border-radius: 999px;
-      display:grid;place-items:center;
-      background: rgba(255,255,255,0.12);
-      border: 1px solid rgba(255,255,255,0.14);
-      box-shadow: var(--shadow);
-      cursor:pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .subStats{
-      display:grid;
-      grid-template-columns:1fr auto 1fr;
-      align-items:center;
-      gap: 12px;
-      margin-top: 6px;
-      padding: 10px 10px;
-      border-radius: 18px;
-      background: rgba(255,255,255,0.06);
-      border: 1px solid rgba(255,255,255,0.10);
-    }
-    .stat{
-      text-align:center;
-      font-weight: 900;
-      letter-spacing:0.6px;
-    }
-    .stat .t{font-size:12px;color:var(--muted)}
-    .stat .v{font-size:20px;margin-top:4px}
-    .divider{
-      width:1px;height:32px;background: rgba(255,255,255,0.20);
-      border-radius: 9px;
-    }
-
-    /* Controls (scorer only) */
-    .controls{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-    .ctl{
+    .btn{
       border-radius: 18px;
       border: 1px solid rgba(255,255,255,0.12);
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.10);
       color: var(--text);
-      font-weight: 900;
+      font-weight: 950;
       padding: 14px 12px;
       font-size: 16px;
       cursor:pointer;
       -webkit-tap-highlight-color: transparent;
     }
-    .ctl.danger{
+    .btn.primary{
+      background: var(--blue);
+      border-color: rgba(47,109,255,0.35);
+      box-shadow: 0 10px 24px rgba(47,109,255,0.25);
+    }
+    .btn.orange{
+      background: var(--orange);
+      color:#111;
+      border-color: rgba(255,155,47,0.35);
+    }
+    .btn.danger{
       background: rgba(239,68,68,0.18);
       border-color: rgba(239,68,68,0.25);
     }
-    .ctl:disabled{opacity:0.55;cursor:not-allowed}
+    .btn:disabled{opacity:0.55;cursor:not-allowed}
 
-    /* Result page */
-    .resultTop{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap: 10px;
-      padding: 4px 2px 0;
-    }
-    .resultTop .done{
-      font-weight:900;
-      color: var(--muted);
-      cursor:pointer;
-      user-select:none;
-    }
-    .resultTop .time{
-      font-weight:900;
-      color: var(--muted);
-    }
-    .resultTitle{
-      text-align:center;
-      font-weight: 1000;
-      font-size: 34px;
-      letter-spacing: -0.4px;
-      margin-top: 6px;
-    }
-    .resultScore{
-      margin: 10px auto 8px;
-      display:flex; align-items:center; justify-content:center; gap: 12px;
-      font-weight: 1000;
-      font-size: 44px;
-      letter-spacing: -0.6px;
-    }
-    .pillA,.pillB{
-      padding: 10px 16px;
-      border-radius: 16px;
-      box-shadow: var(--shadow);
-      min-width: 92px;
-      text-align:center;
-    }
-    .pillA{background: var(--blue)}
-    .pillB{background: var(--orange); color:#111}
-    .setsTitle{
-      font-weight: 1000;
-      margin-top: 10px;
-      color: var(--text);
-      letter-spacing: 0.8px;
-    }
-    .sets{
-      margin-top: 8px;
+    /* Live score tiles */
+    .scoreGrid{display:grid;grid-template-columns:1fr 1fr;gap: 12px;}
+    .tile{
+      border-radius: 22px;
+      padding: 14px 12px;
       display:flex;
       flex-direction:column;
-      gap: 8px;
+      justify-content:space-between;
+      min-height: 210px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
     }
-    .setRow{
+    .tile.blue{
+      background: radial-gradient(600px 300px at 30% 10%, rgba(255,255,255,0.20), transparent 55%), var(--blue);
+    }
+    .tile.orange{
+      background: radial-gradient(600px 300px at 30% 10%, rgba(255,255,255,0.18), transparent 55%), var(--orange);
+      color:#111;
+    }
+    .pname{
+      font-weight: 950;
+      font-size: 14px;
+      letter-spacing:0.2px;
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      opacity:0.95;
+    }
+    .serveDot{
+      width: 10px;height: 10px;border-radius: 999px;
+      background: rgba(255,255,255,0.85);
+      box-shadow: 0 0 0 5px rgba(255,255,255,0.20);
+      opacity:0;
+    }
+    .serveDot.on{opacity:1}
+    .pts{
+      font-weight: 1000;
+      font-size: 84px;
+      line-height: 1;
+      text-align:center;
+      margin-top: 8px;
+      letter-spacing: -1px;
+    }
+
+    /* Small stats */
+    .stats{
       display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      grid-template-columns:1fr auto 1fr;
       align-items:center;
-      padding: 12px 12px;
-      border-radius: 16px;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 18px;
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.10);
     }
-    .setLeft{
-      color: var(--muted);
-      font-weight: 900;
-      font-variant-numeric: tabular-nums;
+    .divider{width:1px;height:32px;background: rgba(255,255,255,0.22);border-radius:9px}
+    .stat{text-align:center;font-weight:950;letter-spacing:0.6px}
+    .stat .t{font-size:12px;color:var(--muted)}
+    .stat .v{font-size:20px;margin-top:4px;font-variant-numeric: tabular-nums}
+
+    /* Set history always visible */
+    .setsBox{
+      margin-top: 10px;
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.10);
     }
-    .setRight{
+    .setsHead{
+      display:flex; align-items:center; justify-content:space-between;
+      font-weight: 950;
+      letter-spacing:0.6px;
+      margin-bottom: 8px;
+    }
+    .setsList{
       display:flex;
-      justify-content:flex-end;
-      gap: 10px;
-      font-weight: 1000;
+      flex-wrap:wrap;
+      gap: 8px;
+    }
+    .chip{
+      border-radius: 999px;
+      padding: 8px 10px;
+      background: rgba(255,255,255,0.10);
+      border: 1px solid rgba(255,255,255,0.12);
+      font-weight: 950;
+      font-size: 13px;
       font-variant-numeric: tabular-nums;
     }
 
-    /* Small helpers */
+    /* Controls */
+    .controls{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .wide{grid-column: 1 / -1}
     .hidden{display:none !important;}
+    .centerHint{display:grid;place-items:center;height:100%;text-align:center;color:var(--muted)}
+    .bigWait{font-weight:1000;font-size:18px;color:var(--text);margin-bottom:6px}
+
+    /* Bottom dots */
+    .dots{display:flex;justify-content:center;gap:8px;padding:6px 0 2px;opacity:0.9}
+    .dots span{width:8px;height:8px;border-radius:999px;background: rgba(255,255,255,0.25)}
+    .dots span.on{background: rgba(255,255,255,0.85)}
   </style>
 </head>
 
 <body>
-  <div class="app">
+<div class="app">
 
-    <div class="top">
-      <div class="brand">
-        <span class="emoji">🏓</span>
-        <span>Table Tennis</span>
-      </div>
-      <div class="status">
-        <span class="dot" id="dot"></span>
-        <span id="net">Starting…</span>
-      </div>
+  <div class="top">
+    <div>
+      <div class="title">Table Tennis For Life - Live Score Card</div>
+      <div class="sub"><span id="roleTxt">watch</span> • Room: <span id="roomTxt">ttfl</span></div>
     </div>
-
-    <div class="pages">
-      <div class="track" id="track">
-
-        <!-- PAGE 0: Start -->
-        <section class="page">
-          <div>
-            <div class="hint" style="margin:2px 2px 14px;">
-              <b id="roleText">watch</b> mode • Match: <b id="matchText">—</b>
-            </div>
-
-            <button class="bigbtn" id="btnStart">
-              <span class="icon">▶</span>
-              <span>Start game</span>
-            </button>
-
-            <div style="height:12px"></div>
-
-            <button class="bigbtn gray" id="btnSettings">
-              <span class="icon">⚙</span>
-              <span>Settings</span>
-            </button>
-
-            <div style="height:14px"></div>
-
-            <div class="hint">
-              Share the Watch link with anyone. Only the scorer can change the score.
-            </div>
-          </div>
-
-          <div>
-            <div class="hint" id="shareHint"></div>
-          </div>
-        </section>
-
-        <!-- PAGE 1: Setup -->
-        <section class="page">
-          <div class="card">
-            <div class="label">First player</div>
-            <input id="nameA" placeholder="Tanvi"/>
-
-            <div style="height:10px"></div>
-
-            <div class="label">Second player</div>
-            <input id="nameB" placeholder="Opponent"/>
-
-            <div style="height:10px"></div>
-
-            <div class="label">Who starts?</div>
-            <select id="starts">
-              <option value="A">First player starts</option>
-              <option value="B">Second player starts</option>
-            </select>
-
-            <div style="height:12px"></div>
-
-            <div class="row2">
-              <div>
-                <div class="label">Best of</div>
-                <select id="bestOf">
-                  <option value="3">3</option>
-                  <option value="5" selected>5</option>
-                  <option value="7">7</option>
-                </select>
-              </div>
-              <div>
-                <div class="label">Points</div>
-                <select id="ptWin">
-                  <option value="11" selected>11</option>
-                  <option value="21">21</option>
-                </select>
-              </div>
-            </div>
-
-            <div style="height:12px"></div>
-
-            <div class="hint">
-              Scorer becomes the owner of this match automatically (Firebase Anonymous Auth).
-            </div>
-          </div>
-
-          <div style="display:flex; gap:10px;">
-            <button class="ctl" id="btnBackSetup" style="flex:1;">Back</button>
-            <button class="ctl" id="btnSaveSetup" style="flex:1;">Save</button>
-          </div>
-        </section>
-
-        <!-- PAGE 2: Live Score -->
-        <section class="page">
-          <div>
-            <div class="scoreGrid">
-              <div class="tile blue">
-                <div class="pname">
-                  <span id="aLabel">Player A</span>
-                  <span class="serveDot" id="aServe"></span>
-                </div>
-                <div class="points" id="aPts">0</div>
-              </div>
-
-              <div class="tile orange">
-                <div class="pname">
-                  <span id="bLabel">Player B</span>
-                  <span class="serveDot" id="bServe"></span>
-                </div>
-                <div class="points" id="bPts">0</div>
-              </div>
-            </div>
-
-            <div class="midRow">
-              <div class="undoBubble" id="btnUndo" title="Undo">↩</div>
-            </div>
-
-            <div class="subStats">
-              <div class="stat">
-                <div class="t">GAMES</div>
-                <div class="v" id="games">0:0</div>
-              </div>
-              <div class="divider"></div>
-              <div class="stat">
-                <div class="t">MATCHES</div>
-                <div class="v" id="matches">0:0</div>
-              </div>
-            </div>
-          </div>
-
-          <div id="scorerControls" class="controls hidden">
-            <button class="ctl" id="btnPlusA">+1 (A)</button>
-            <button class="ctl" id="btnPlusB">+1 (B)</button>
-            <button class="ctl" id="btnSwap">Swap serve</button>
-            <button class="ctl danger" id="btnEnd">End match</button>
-          </div>
-
-          <div id="watchControls" class="hint hidden">
-            Watching live. No refresh needed.
-          </div>
-        </section>
-
-        <!-- PAGE 3: Result -->
-        <section class="page">
-          <div>
-            <div class="resultTop">
-              <div class="done" id="btnDone">Done</div>
-              <div class="time" id="clock">--:--</div>
-            </div>
-
-            <div class="resultTitle">Result</div>
-            <div class="resultScore">
-              <div class="pillA" id="resA">0</div>
-              <div style="opacity:0.75">:</div>
-              <div class="pillB" id="resB">0</div>
-            </div>
-
-            <div class="setsTitle">SETS</div>
-            <div class="sets" id="sets"></div>
-          </div>
-
-          <div>
-            <button class="ctl" id="btnBackToScore">Back to score</button>
-          </div>
-        </section>
-
-      </div>
+    <div class="status">
+      <span class="dot" id="dot"></span>
+      <span id="net">Starting…</span>
     </div>
-
-    <div class="dots" id="dots">
-      <span class="on"></span><span></span><span></span><span></span>
-    </div>
-
   </div>
+
+  <div class="pages">
+    <div class="track" id="track">
+
+      <!-- PAGE 0: Home / Waiting -->
+      <section class="page">
+        <div class="card">
+          <div class="label">Live status</div>
+          <div class="hint" id="homeMsg">Waiting for a match to start…</div>
+          <div style="height:10px"></div>
+          <div class="hint">Watchers will automatically jump to live score when the scorer starts a match.</div>
+        </div>
+
+        <div class="controls" id="homeButtons">
+          <button class="btn primary wide" id="btnGoLive">Go to Live Score</button>
+          <button class="btn wide" id="btnSettings">Settings</button>
+        </div>
+      </section>
+
+      <!-- PAGE 1: Settings -->
+      <section class="page">
+        <div class="card">
+          <div class="label">First player</div>
+          <input id="nameA" placeholder="Tanvi"/>
+
+          <div style="height:10px"></div>
+
+          <div class="label">Second player</div>
+          <input id="nameB" placeholder="Opponent"/>
+
+          <div style="height:10px"></div>
+
+          <div class="label">Who starts?</div>
+          <select id="starts">
+            <option value="A">First player starts</option>
+            <option value="B">Second player starts</option>
+          </select>
+
+          <div style="height:12px"></div>
+
+          <div class="row2">
+            <div>
+              <div class="label">Best of</div>
+              <select id="bestOf">
+                <option value="3">3</option>
+                <option value="5" selected>5</option>
+                <option value="7">7</option>
+              </select>
+            </div>
+            <div>
+              <div class="label">Points</div>
+              <select id="ptWin">
+                <option value="11" selected>11</option>
+                <option value="21">21</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="height:12px"></div>
+          <div class="hint">Scorer starts matches from Home. Watchers do not need to change anything.</div>
+        </div>
+
+        <div class="controls">
+          <button class="btn" id="btnBackSettings">Back</button>
+          <button class="btn primary" id="btnSaveSettings">Save</button>
+        </div>
+      </section>
+
+      <!-- PAGE 2: Live score -->
+      <section class="page" id="livePage">
+        <div>
+          <div class="scoreGrid">
+            <div class="tile blue">
+              <div class="pname"><span id="aLabel">Player A</span><span class="serveDot" id="aServe"></span></div>
+              <div class="pts" id="aPts">0</div>
+            </div>
+            <div class="tile orange">
+              <div class="pname"><span id="bLabel">Player B</span><span class="serveDot" id="bServe"></span></div>
+              <div class="pts" id="bPts">0</div>
+            </div>
+          </div>
+
+          <div class="stats" style="margin-top:10px;">
+            <div class="stat"><div class="t">GAMES</div><div class="v" id="games">0:0</div></div>
+            <div class="divider"></div>
+            <div class="stat"><div class="t">MATCH</div><div class="v" id="matchScore">0:0</div></div>
+          </div>
+
+          <div class="setsBox">
+            <div class="setsHead">
+              <div>PREVIOUS GAMES</div>
+              <div class="hint" id="matchIdTxt" style="margin:0;">—</div>
+            </div>
+            <div class="setsList" id="setsList"></div>
+          </div>
+        </div>
+
+        <div class="controls hidden" id="scorerControls">
+          <button class="btn primary" id="btnPlusA">+1 (A)</button>
+          <button class="btn orange" id="btnPlusB">+1 (B)</button>
+          <button class="btn" id="btnUndo">Undo</button>
+          <button class="btn" id="btnSwap">Swap serve</button>
+          <button class="btn danger wide" id="btnEnd">End Match</button>
+        </div>
+
+        <div class="centerHint hidden" id="watchHint">
+          <div>
+            <div class="bigWait">Watching live</div>
+            <div class="hint">No refresh needed.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PAGE 3: Result -->
+      <section class="page">
+        <div class="card" id="resultCard">
+          <div class="label">Result</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <div style="font-weight:1000;font-size:22px;" id="winnerTxt">—</div>
+            <div class="hint" id="endedAtTxt" style="margin:0;">—</div>
+          </div>
+          <div style="height:10px"></div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:10px;font-weight:1000;font-size:42px;">
+            <span style="padding:10px 16px;border-radius:16px;background:var(--blue);box-shadow:var(--shadow);" id="resA">0</span>
+            <span style="opacity:.7">:</span>
+            <span style="padding:10px 16px;border-radius:16px;background:var(--orange);color:#111;box-shadow:var(--shadow);" id="resB">0</span>
+          </div>
+
+          <div style="height:12px"></div>
+          <div class="label">Games (sets)</div>
+          <div class="setsList" id="setsListResult"></div>
+        </div>
+
+        <div class="controls" id="resultControls">
+          <button class="btn wide" id="btnSaveImage">Save Result Image</button>
+          <button class="btn primary wide hidden" id="btnNewMatch">Start New Match</button>
+          <button class="btn wide" id="btnBackHome">Back</button>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="dots" id="dots">
+    <span class="on"></span><span></span><span></span><span></span>
+  </div>
+
+</div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getDatabase, ref, onValue, get, set, update } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getDatabase, ref, onValue, get, set, update, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
   import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   // =========================
   // PASTE YOUR firebaseConfig HERE
   // =========================
-  const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyD221i61Z824UbXSLRT-UZs7w60KNzh5nY",
   authDomain: "ttfl-live-score.firebaseapp.com",
   databaseURL: "https://ttfl-live-score-default-rtdb.firebaseio.com",
@@ -595,49 +446,54 @@
 
   const $ = (id) => document.getElementById(id);
 
-  // role + match
   const params = new URL(location.href).searchParams;
   const role = (params.get("role") || "watch").toLowerCase() === "scorer" ? "scorer" : "watch";
-  const matchId = (params.get("match") || "tanvi").trim();
+  const roomId = (params.get("room") || "ttfl").trim();
 
-  $("roleText").textContent = role;
-  $("matchText").textContent = matchId;
+  $("roleTxt").textContent = role;
+  $("roomTxt").textContent = roomId;
 
   // UI routing
   const track = $("track");
   const dots = [...$("dots").querySelectorAll("span")];
   let pageIndex = 0;
-
   function goto(i){
     pageIndex = Math.max(0, Math.min(3, i));
     track.style.transform = `translateX(${-100*pageIndex}%)`;
     dots.forEach((d,idx)=>d.classList.toggle("on", idx===pageIndex));
   }
 
-  $("btnStart").onclick = () => goto(2);
-  $("btnSettings").onclick = () => goto(1);
-  $("btnBackSetup").onclick = () => goto(0);
-  $("btnBackToScore").onclick = () => goto(2);
-  $("btnDone").onclick = () => goto(0);
-
-  // show controls by role
-  $("scorerControls").classList.toggle("hidden", role !== "scorer");
-  $("watchControls").classList.toggle("hidden", role !== "watch");
-
-  // network dot
+  // Status dot
   function setNet(ok,msg){
     $("dot").className = "dot " + (ok ? "ok" : "bad");
     $("net").textContent = msg;
   }
 
-  // match ref
-  const mref = ref(db, `matches/${matchId}`);
+  // Show/Hide by role
+  $("scorerControls").classList.toggle("hidden", role !== "scorer");
+  $("watchHint").classList.toggle("hidden", role !== "watch");
+  $("btnNewMatch").classList.toggle("hidden", role !== "scorer");
+  $("btnSettings").classList.toggle("hidden", role !== "scorer"); // watchers do not need settings
+  $("btnSaveSettings").classList.toggle("hidden", role !== "scorer");
 
-  // state
+  // Firebase refs
+  const roomRef = ref(db, `rooms/${roomId}`);
+  const currentMatchRef = ref(db, `rooms/${roomId}/currentMatchId`);
+  let matchUnsub = null;
+  let currentMatchId = null;
+
+  // Local state
   let uid = null;
-  let last = null;
+  let matchData = null;
 
-  function nowIso(){ return new Date().toISOString(); }
+  function iso(){ return new Date().toISOString(); }
+  function fmtTime(d){
+    const dt = new Date(d);
+    const hh = String(dt.getHours()%12 || 12);
+    const mm = String(dt.getMinutes()).padStart(2,"0");
+    return `${hh}:${mm}`;
+  }
+
   function need(bestOf){ return Math.floor(bestOf/2)+1; }
   function gameWinner(a,b,ptWin){
     const max=Math.max(a,b), min=Math.min(a,b);
@@ -654,156 +510,259 @@
     return (flips % 2 === 0) ? start : (start==="A" ? "B" : "A");
   }
 
-  function render(s){
-    if(!s || !s.match) return;
-    const m = s.match;
+  function renderSets(listEl, sets){
+    listEl.innerHTML = "";
+    if(!sets || sets.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "hint";
+      empty.textContent = "No games yet.";
+      listEl.appendChild(empty);
+      return;
+    }
+    sets.forEach((s, idx)=>{
+      const chip = document.createElement("div");
+      chip.className = "chip";
+      chip.textContent = `${idx+1}) ${s.a}-${s.b}`;
+      listEl.appendChild(chip);
+    });
+  }
 
-    $("nameA").value = $("nameA").value || m.teamAName || "Player A";
-    $("nameB").value = $("nameB").value || m.teamBName || "Player B";
+  function renderMatch(s){
+    matchData = s;
+    if(!s || !s.match){
+      $("homeMsg").textContent = "Waiting for a match to start…";
+      return;
+    }
+
+    const m = s.match;
+    $("matchIdTxt").textContent = currentMatchId ? `#${currentMatchId}` : "—";
 
     $("aLabel").textContent = m.teamAName || "Player A";
     $("bLabel").textContent = m.teamBName || "Player B";
-
     $("aPts").textContent = m.pointsA ?? 0;
     $("bPts").textContent = m.pointsB ?? 0;
-
     $("games").textContent = `${m.gamesA ?? 0}:${m.gamesB ?? 0}`;
-    $("matches").textContent = `${m.matchesA ?? 0}:${m.matchesB ?? 0}`;
+    $("matchScore").textContent = `${m.matchesA ?? 0}:${m.matchesB ?? 0}`;
 
     const srv = computeServer(m);
     $("aServe").classList.toggle("on", srv==="A");
     $("bServe").classList.toggle("on", srv==="B");
 
-    // Result page
+    renderSets($("setsList"), s.sets || []);
+    renderSets($("setsListResult"), s.sets || []);
+
+    // result
     $("resA").textContent = (m.matchesA ?? 0);
     $("resB").textContent = (m.matchesB ?? 0);
+    $("winnerTxt").textContent = m.winner ? `Winner: ${m.winner}` : "Result";
+    $("endedAtTxt").textContent = m.endedAt ? `Ended ${fmtTime(m.endedAt)}` : "";
 
-    const setsEl = $("sets");
-    setsEl.innerHTML = "";
-    const sets = Array.isArray(s.sets) ? s.sets : [];
-    for(const st of sets){
-      const row = document.createElement("div");
-      row.className = "setRow";
-      row.innerHTML = `
-        <div class="setLeft">${st.duration || ""}</div>
-        <div class="setRight"><span>${st.a}</span><span style="opacity:.6">:</span><span>${st.b}</span></div>
-      `;
-      setsEl.appendChild(row);
+    // Home message
+    if(m.matchOver){
+      $("homeMsg").textContent = "Match ended. Waiting for next match…";
+    } else {
+      $("homeMsg").textContent = "Match is live now.";
     }
 
-    if(m.matchOver){
+    // AUTO NAVIGATION:
+    // Watchers jump to live automatically when match starts
+    // and jump to result automatically when match ends
+    if(!m.matchOver){
+      goto(2);
+    } else {
       goto(3);
     }
   }
 
-  // Create match (scorer only)
-  async function ensureMatch(){
-    const snap = await get(mref);
-    if(snap.exists()) return snap.val();
-
-    if(role !== "scorer") {
-      setNet(false,"Match not found yet");
-      return null;
+  function subscribeToMatch(matchId){
+    if(matchUnsub) matchUnsub();
+    currentMatchId = matchId;
+    if(!matchId){
+      setNet(true, "Waiting…");
+      goto(0);
+      return;
     }
-    if(!uid) throw new Error("Scorer not authenticated yet.");
+    const mref = ref(db, `matches/${matchId}`);
+    matchUnsub = onValue(mref, (snap)=>{
+      if(!snap.exists()){
+        setNet(false, "Match missing");
+        goto(0);
+        return;
+      }
+      setNet(true, "Live");
+      renderMatch(snap.val());
+    }, (err)=>{
+      setNet(false, err?.message || "Listen error");
+    });
+  }
+
+  // Subscribe to currentMatch pointer (this is the key feature)
+  onValue(currentMatchRef, (snap)=>{
+    const matchId = snap.val();
+    subscribeToMatch(matchId);
+  });
+
+  // Auth
+  if(role === "scorer"){
+    setNet(true, "Signing in…");
+    signInAnonymously(auth).catch((e)=>{
+      setNet(false, e.message || "Auth failed");
+      alert(e.message || "Auth failed");
+    });
+  } else {
+    setNet(true, "Watching…");
+  }
+
+  onAuthStateChanged(auth, (user)=>{
+    uid = user?.uid || null;
+    if(role === "scorer" && uid){
+      setNet(true, "Scorer ready");
+      // Load saved settings if any
+      const saved = JSON.parse(localStorage.getItem("ttfl_settings") || "{}");
+      if(saved.nameA) $("nameA").value = saved.nameA;
+      if(saved.nameB) $("nameB").value = saved.nameB;
+      if(saved.starts) $("starts").value = saved.starts;
+      if(saved.bestOf) $("bestOf").value = String(saved.bestOf);
+      if(saved.ptWin) $("ptWin").value = String(saved.ptWin);
+    }
+  });
+
+  // Buttons
+  $("btnSettings").onclick = () => goto(1);
+  $("btnBackSettings").onclick = () => goto(0);
+
+  $("btnGoLive").onclick = () => {
+    if(currentMatchId) goto(2);
+    else goto(0);
+  };
+
+  $("btnSaveSettings").onclick = () => {
+    if(role !== "scorer") return;
+    const s = {
+      nameA: ($("nameA").value || "Player A").trim(),
+      nameB: ($("nameB").value || "Player B").trim(),
+      starts: $("starts").value || "A",
+      bestOf: Number($("bestOf").value || 5),
+      ptWin: Number($("ptWin").value || 11),
+    };
+    localStorage.setItem("ttfl_settings", JSON.stringify(s));
+    setNet(true, "Saved");
+    goto(0);
+  };
+
+  // Create a new match (no URL changes; updates rooms/{roomId}/currentMatchId)
+  async function startNewMatch(){
+    if(role !== "scorer") return;
+    if(!uid) throw new Error("Scorer not ready yet.");
+
+    const saved = JSON.parse(localStorage.getItem("ttfl_settings") || "{}");
+    const teamAName = (saved.nameA || $("nameA").value || "Player A").trim();
+    const teamBName = (saved.nameB || $("nameB").value || "Player B").trim();
+    const serverStart = saved.starts || $("starts").value || "A";
+    const bestOf = Number(saved.bestOf || $("bestOf").value || 5);
+    const pointsToWin = Number(saved.ptWin || $("ptWin").value || 11);
+
+    // increment per-room counter safely
+    const counterRef = ref(db, `rooms/${roomId}/counter`);
+    const tx = await runTransaction(counterRef, (cur)=> (cur || 0) + 1);
+    const n = tx.snapshot.val();
+    const matchId = `${roomId}-${n}`;
 
     const init = {
       ownerUid: uid,
-      createdAt: nowIso(),
-      updatedAt: nowIso(),
+      createdAt: iso(),
+      updatedAt: iso(),
       match: {
-        teamAName: ($("nameA").value || "Player A").trim(),
-        teamBName: ($("nameB").value || "Player B").trim(),
-        bestOf: Number($("bestOf").value || 5),
-        pointsToWin: Number($("ptWin").value || 11),
-        serverStart: ($("starts").value || "A"),
+        teamAName, teamBName,
+        bestOf, pointsToWin,
+        serverStart,
         pointsA: 0, pointsB: 0,
         gamesA: 0, gamesB: 0,
         matchesA: 0, matchesB: 0,
         matchOver: false,
-        winner: ""
+        winner: "",
+        startedAt: iso(),
+        endedAt: ""
       },
       sets: [],
       history: []
     };
 
-    await set(mref, init);
-    return init;
+    await set(ref(db, `matches/${matchId}`), init);
+    await set(currentMatchRef, matchId); // <-- watchers follow automatically
+    return matchId;
   }
 
-  // Save setup (names / rules)
-  $("btnSaveSetup").onclick = async () => {
+  // Home: scorer taps Start (we reuse btnGoLive for both roles; scorer can start if none)
+  $("btnGoLive").textContent = (role === "scorer") ? "Start / Go Live" : "Go to Live Score";
+  $("btnGoLive").onclick = async () => {
     try{
-      if(role !== "scorer") { goto(2); return; }
-      const cur = await ensureMatch();
-      if(!cur) return;
-
-      await update(mref, {
-        updatedAt: nowIso(),
-        match: {
-          ...cur.match,
-          teamAName: ($("nameA").value || "Player A").trim(),
-          teamBName: ($("nameB").value || "Player B").trim(),
-          bestOf: Number($("bestOf").value || 5),
-          pointsToWin: Number($("ptWin").value || 11),
-          serverStart: ($("starts").value || "A"),
+      if(role === "scorer"){
+        // If there is no current match OR current match is over, start a new one
+        if(!matchData || !matchData.match || matchData.match.matchOver){
+          setNet(true, "Starting match…");
+          await startNewMatch();
+          goto(2);
+        } else {
+          goto(2);
         }
-      });
-      setNet(true,"Saved");
-      goto(2);
+      } else {
+        if(currentMatchId) goto(2);
+        else goto(0);
+      }
     }catch(e){
-      setNet(false, e.message || "Save failed");
-      alert(e.message || "Save failed");
+      setNet(false, e.message || "Start failed");
+      alert(e.message || "Start failed");
     }
   };
 
-  // Share links
-  const base = new URL(location.href);
-  base.searchParams.set("match", matchId);
-  const watchUrl = new URL(base); watchUrl.searchParams.set("role","watch");
-  const scoreUrl = new URL(base); scoreUrl.searchParams.set("role","scorer");
-  $("shareHint").textContent = `Watch: ${watchUrl.toString()}`;
-
-  // History + write helper (scorer only)
+  // Helper: scorer-only write with owner check + undo history
   async function change(mutator){
     if(role !== "scorer") return;
+    if(!currentMatchId) throw new Error("No active match.");
+    const mref = ref(db, `matches/${currentMatchId}`);
     const snap = await get(mref);
-    if(!snap.exists()) throw new Error("Match does not exist yet. Save setup first.");
+    if(!snap.exists()) throw new Error("Match missing.");
+
     const s = snap.val();
     if(s.ownerUid !== uid) throw new Error("Another scorer owns this match.");
 
     s.history = Array.isArray(s.history) ? s.history : [];
-    s.history.push({
-      match: { ...s.match },
-      sets: Array.isArray(s.sets) ? [...s.sets] : [],
-      at: nowIso()
-    });
+    s.history.push({ match: { ...s.match }, sets: [...(s.sets||[])], at: iso() });
     while(s.history.length > 40) s.history.shift();
 
     mutator(s);
 
-    s.updatedAt = nowIso();
+    s.updatedAt = iso();
     await set(mref, s);
   }
 
-  // Buttons
   $("btnPlusA").onclick = () => change((s)=>{
     const m = s.match;
     if(m.matchOver) return;
     m.pointsA++;
     const w = gameWinner(m.pointsA, m.pointsB, m.pointsToWin);
     if(w){
-      // record set
+      // store the finished game/set score
       s.sets = Array.isArray(s.sets) ? s.sets : [];
-      s.sets.push({ duration:"", a:m.pointsA, b:m.pointsB });
+      s.sets.push({ a: m.pointsA, b: m.pointsB, endedAt: iso() });
 
       if(w==="A") m.gamesA++; else m.gamesB++;
-      m.pointsA = 0; m.pointsB = 0;
+      m.pointsA=0; m.pointsB=0;
+
+      // alternate serve start each game
       m.serverStart = (m.serverStart==="A") ? "B" : "A";
 
+      // end match when someone wins enough games
       const needed = need(m.bestOf);
-      if(m.gamesA >= needed){ m.matchesA++; m.matchOver=true; m.winner=m.teamAName; }
-      if(m.gamesB >= needed){ m.matchesB++; m.matchOver=true; m.winner=m.teamBName; }
+      if(m.gamesA >= needed){
+        m.matchesA = 1; m.matchesB = 0;
+        m.matchOver = true; m.winner = m.teamAName; m.endedAt = iso();
+      }
+      if(m.gamesB >= needed){
+        m.matchesA = 0; m.matchesB = 1;
+        m.matchOver = true; m.winner = m.teamBName; m.endedAt = iso();
+      }
     }
   });
 
@@ -814,21 +773,29 @@
     const w = gameWinner(m.pointsA, m.pointsB, m.pointsToWin);
     if(w){
       s.sets = Array.isArray(s.sets) ? s.sets : [];
-      s.sets.push({ duration:"", a:m.pointsA, b:m.pointsB });
+      s.sets.push({ a: m.pointsA, b: m.pointsB, endedAt: iso() });
 
       if(w==="A") m.gamesA++; else m.gamesB++;
-      m.pointsA = 0; m.pointsB = 0;
+      m.pointsA=0; m.pointsB=0;
       m.serverStart = (m.serverStart==="A") ? "B" : "A";
 
       const needed = need(m.bestOf);
-      if(m.gamesA >= needed){ m.matchesA++; m.matchOver=true; m.winner=m.teamAName; }
-      if(m.gamesB >= needed){ m.matchesB++; m.matchOver=true; m.winner=m.teamBName; }
+      if(m.gamesA >= needed){
+        m.matchesA = 1; m.matchesB = 0;
+        m.matchOver = true; m.winner = m.teamAName; m.endedAt = iso();
+      }
+      if(m.gamesB >= needed){
+        m.matchesA = 0; m.matchesB = 1;
+        m.matchOver = true; m.winner = m.teamBName; m.endedAt = iso();
+      }
     }
   });
 
   $("btnUndo").onclick = async () => {
     try{
       if(role !== "scorer") return;
+      if(!currentMatchId) return;
+      const mref = ref(db, `matches/${currentMatchId}`);
       const snap = await get(mref);
       if(!snap.exists()) return;
       const s = snap.val();
@@ -839,7 +806,7 @@
       s.match = prev.match;
       s.sets = prev.sets;
       s.history = h;
-      s.updatedAt = nowIso();
+      s.updatedAt = iso();
       await set(mref, s);
     }catch(e){
       setNet(false, e.message || "Undo failed");
@@ -852,65 +819,152 @@
   });
 
   $("btnEnd").onclick = () => change((s)=>{
-    s.match.matchOver = true;
-    s.match.winner = (s.match.gamesA > s.match.gamesB) ? s.match.teamAName : s.match.teamBName;
+    const m = s.match;
+    if(m.matchOver) return;
+    m.matchOver = true;
+    m.endedAt = iso();
+    // pick winner by games
+    if(m.gamesA === m.gamesB) m.winner = "Match ended";
+    else m.winner = (m.gamesA > m.gamesB) ? m.teamAName : m.teamBName;
+    m.matchesA = (m.gamesA > m.gamesB) ? 1 : 0;
+    m.matchesB = (m.gamesB > m.gamesA) ? 1 : 0;
   });
 
-  // Clock on result page
-  setInterval(()=>{
-    const d = new Date();
-    const hh = String(d.getHours()%12 || 12).padStart(1,"0");
-    const mm = String(d.getMinutes()).padStart(2,"0");
-    $("clock").textContent = `${hh}:${mm}`;
-  }, 1000);
+  // Result controls
+  $("btnBackHome").onclick = () => goto(0);
 
-  // Auth + subscribe
-  if(role === "scorer"){
-    setNet(true,"Signing in…");
-    signInAnonymously(auth).catch((e)=>{
-      setNet(false, e.message || "Auth failed");
-      alert(e.message || "Auth failed");
-    });
-  } else {
-    setNet(true,"Watching…");
+  $("btnNewMatch").onclick = async () => {
+    try{
+      setNet(true, "Starting match…");
+      await startNewMatch(); // watchers auto-follow
+      goto(2);
+    }catch(e){
+      setNet(false, e.message || "Start failed");
+      alert(e.message || "Start failed");
+    }
+  };
+
+  // Save Result Image: generates a PNG (user tap required). iPhone can Save Image via Share.
+  $("btnSaveImage").onclick = async () => {
+    try{
+      if(!matchData || !matchData.match) return;
+
+      const m = matchData.match;
+      const sets = matchData.sets || [];
+      const w = 1080, h = 1080; // square social-friendly
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d");
+
+      // background
+      const grad = ctx.createLinearGradient(0,0,w,h);
+      grad.addColorStop(0, "#0b0d12");
+      grad.addColorStop(1, "#121826");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0,0,w,h);
+
+      // header
+      ctx.fillStyle = "rgba(255,255,255,0.92)";
+      ctx.font = "700 44px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.fillText("Table Tennis For Life", 70, 110);
+      ctx.font = "800 52px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.fillText("Live Score Card", 70, 170);
+
+      // names
+      ctx.font = "700 42px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.fillStyle = "rgba(245,247,255,0.92)";
+      ctx.fillText(m.teamAName || "Player A", 70, 270);
+      ctx.fillText(m.teamBName || "Player B", 70, 330);
+
+      // match score
+      const a = m.matchesA ?? 0;
+      const b = m.matchesB ?? 0;
+
+      // pills
+      const pill = (x,y,text,bg,fg)=>{
+        ctx.fillStyle = bg;
+        roundRect(ctx,x,y,260,120,26); ctx.fill();
+        ctx.fillStyle = fg;
+        ctx.font = "900 72px system-ui, -apple-system, Segoe UI, Roboto";
+        ctx.textAlign = "center";
+        ctx.fillText(text, x+130, y+84);
+        ctx.textAlign = "left";
+      };
+      pill(70, 400, String(a), "#2f6dff", "#ffffff");
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      ctx.font = "900 72px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.fillText(":", 350, 485);
+      pill(420, 400, String(b), "#ff9b2f", "#111111");
+
+      // winner + time
+      ctx.fillStyle = "rgba(245,247,255,0.78)";
+      ctx.font = "700 34px system-ui, -apple-system, Segoe UI, Roboto";
+      const ended = m.endedAt ? new Date(m.endedAt) : new Date();
+      ctx.fillText(`Winner: ${m.winner || "-"}`, 70, 575);
+      ctx.fillText(`Ended: ${ended.toLocaleString()}`, 70, 625);
+
+      // sets list
+      ctx.fillStyle = "rgba(245,247,255,0.92)";
+      ctx.font = "900 36px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.fillText("GAMES", 70, 710);
+
+      ctx.font = "800 34px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.fillStyle = "rgba(245,247,255,0.88)";
+      let y = 770;
+      if(sets.length === 0){
+        ctx.fillStyle = "rgba(245,247,255,0.6)";
+        ctx.fillText("No games recorded.", 70, y);
+      } else {
+        sets.slice(0, 10).forEach((s, i)=>{
+          ctx.fillText(`${i+1}) ${s.a}-${s.b}`, 70, y);
+          y += 46;
+        });
+      }
+
+      // footer
+      ctx.fillStyle = "rgba(245,247,255,0.45)";
+      ctx.font = "700 26px system-ui, -apple-system, Segoe UI, Roboto";
+      ctx.fillText("Generated by TTFL Live Score", 70, 1020);
+
+      // share / download
+      canvas.toBlob(async (blob)=>{
+        if(!blob) return;
+        const file = new File([blob], "ttfl-result.png", { type: "image/png" });
+
+        // iOS share sheet if available
+        if(navigator.canShare && navigator.canShare({ files: [file] })){
+          await navigator.share({ files: [file], title: "TTFL Result" });
+          return;
+        }
+
+        // fallback download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "ttfl-result.png";
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }, "image/png");
+    }catch(e){
+      alert(e.message || "Save image failed");
+    }
+  };
+
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
   }
 
-  onAuthStateChanged(auth, async (user)=>{
-    uid = user?.uid || null;
-    if(role === "scorer" && uid){
-      setNet(true,"Scorer ready");
-      try{ await ensureMatch(); } catch {}
-    }
-  });
-
-  onValue(mref, (snap)=>{
-    if(!snap.exists()){
-      setNet(false, "Match not found");
-      return;
-    }
-    last = snap.val();
-    render(last);
-    setNet(true, "Live");
-  }, (err)=>{
-    setNet(false, err?.message || "Listen error");
-  });
-
-  // Start page
+  // Init
   goto(0);
-
-  // Optional: swipe pages
-  let x0 = null;
-  track.addEventListener("touchstart",(e)=>{ x0 = e.touches[0].clientX; },{passive:true});
-  track.addEventListener("touchmove",(e)=>{
-    if(x0==null) return;
-    const dx = e.touches[0].clientX - x0;
-    if(Math.abs(dx) > 60){
-      goto(pageIndex + (dx < 0 ? 1 : -1));
-      x0 = null;
-    }
-  },{passive:true});
-  track.addEventListener("touchend",()=>{ x0=null; },{passive:true});
-
+  setNet(true, "Starting…");
 </script>
 </body>
 </html>
