@@ -1,21 +1,22 @@
 {
   "version": 1,
-  "updatedAt": "1970-01-01T00:00:00.000Z",
-  "updatedBy": "init",
+  "updatedAt": "2026-02-21T04:41:01.347Z",
+  "updatedBy": "c_4ce1e8bd752548_19c7e6f3a6c",
   "match": {
     "title": "Table Tennis Live",
     "bestOf": 5,
     "pointsToWin": 11,
     "winByTwo": true,
-    "teamAName": "Player A",
-    "teamBName": "Player B",
+    "teamAName": "Tanvi",
+    "teamBName": "Aarav",
     "games": [],
     "currentGame": {
       "gameNumber": 1,
       "a": 0,
       "b": 0,
       "server": "A",
-      "startedAt": "1970-01-01T00:00:00.000Z"
+      "startedAt": "1970-01-01T00:00:00.000Z",
+      "serverStart": "A"
     },
     "matchOver": false,
     "winner": null,
