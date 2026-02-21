@@ -1,0 +1,1230 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>TTFL — Live Score Card</title>
+
+  <!-- iPhone "Add to Home Screen" nice behavior -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0b0f14" />
+
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --card:rgba(255,255,255,.06);
+      --card2:rgba(255,255,255,.08);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.65);
+      --line:rgba(255,255,255,.10);
+      --blue:#2f7bff;
+      --orange:#ff9a3c;
+      --good:#41d38a;
+      --bad:#ff5d5d;
+      --shadow: 0 24px 60px rgba(0,0,0,.45);
+      --radius: 22px;
+      --pad: 18px;
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    html,body{height:100%;}
+    body{
+      margin:0;
+      font-family: var(--font);
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(47,123,255,.22), transparent 55%),
+                  radial-gradient(1000px 600px at 90% 10%, rgba(255,154,60,.18), transparent 60%),
+                  linear-gradient(180deg, #0b0f14 0%, #070a0f 100%);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 10px 10px 14px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight: 800;
+      letter-spacing:.2px;
+      font-size: 20px;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:99px;background:rgba(255,255,255,.35);
+      box-shadow: 0 0 0 4px rgba(255,255,255,.06);
+    }
+    .pill{
+      display:flex; align-items:center; gap:8px;
+      padding: 8px 12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      border-radius: 999px;
+      font-size: 13px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .pill b{color:var(--text); font-weight:700;}
+    .statusDot{
+      width:8px;height:8px;border-radius:99px;background:rgba(255,255,255,.35);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    @media (min-width: 900px){
+      .grid{grid-template-columns: 1.2fr .8fr;}
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .panelHeader{
+      padding: 14px var(--pad);
+      border-bottom: 1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .panelHeader h2{
+      margin:0; font-size: 18px; letter-spacing:.2px;
+    }
+    .panelHeader .sub{
+      margin:0; margin-top:4px; font-size: 13px; color: var(--muted);
+    }
+    .panelBody{ padding: var(--pad); }
+
+    .hint{
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      padding: 12px 14px;
+      background: rgba(255,255,255,.04);
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius: 16px;
+    }
+    .hint strong{ color: var(--text); }
+    .hint .stateLine{ display:flex; gap:8px; align-items:center; margin-top:10px; }
+    .stateBadge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      font-weight: 800;
+      color: var(--text);
+      font-size: 12px;
+      letter-spacing:.2px;
+    }
+    .stateBadge .miniDot{ width:7px; height:7px; border-radius:99px; background: rgba(255,255,255,.35); }
+    .stateBadge.live .miniDot{ background: var(--good); }
+    .stateBadge.cancelled .miniDot{ background: var(--bad); }
+    .stateBadge.scheduled .miniDot{ background: rgba(255,255,255,.55); }
+    .stateBadge.idle .miniDot{ background: rgba(255,255,255,.35); }
+
+    .form{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .field label{
+      display:block;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 8px 2px;
+      letter-spacing:.2px;
+    }
+    input, select{
+      width:100%;
+      box-sizing:border-box;
+      padding: 14px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      outline:none;
+      font-size: 16px; /* iOS zoom prevention */
+    }
+    input::placeholder{color: rgba(255,255,255,.35);}
+    select{appearance:none;}
+    .field.full{grid-column: 1 / -1;}
+
+    .btnRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .btn{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 22px;
+      padding: 16px 14px;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing:.2px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn.primary{
+      background: linear-gradient(180deg, rgba(47,123,255,.35), rgba(47,123,255,.18));
+      border-color: rgba(47,123,255,.45);
+    }
+    .btn.secondary{
+      background: rgba(255,255,255,.05);
+    }
+    .btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+    }
+    .smallNote{
+      margin-top: 10px;
+      font-size: 12.5px;
+      color: var(--muted);
+      text-align:center;
+    }
+
+    /* Score board */
+    .scoreTop{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom: 10px;
+    }
+    .matchTitle{
+      font-weight:800;
+      font-size: 16px;
+      letter-spacing:.2px;
+      margin:0;
+    }
+    .matchMeta{
+      font-size: 12.5px;
+      color: var(--muted);
+      margin: 2px 0 0 0;
+    }
+
+    .scoreGrid{
+      display:grid;
+      grid-template-columns: 1fr 34px 1fr;
+      align-items:center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .scoreCard{
+      border-radius: 24px;
+      padding: 18px 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      position:relative;
+      overflow:hidden;
+    }
+    .scoreCard.blue{ background: linear-gradient(180deg, rgba(47,123,255,.30), rgba(255,255,255,.04)); }
+    .scoreCard.orange{ background: linear-gradient(180deg, rgba(255,154,60,.25), rgba(255,255,255,.04)); }
+
+    .nameRow{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom: 10px;
+    }
+    .pname{ font-weight:900; font-size: 16px; margin:0; }
+    .serve{
+      font-size:12px; color: rgba(255,255,255,.85);
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.16);
+      background: rgba(0,0,0,.20);
+    }
+    .bigScore{
+      font-size: 64px;
+      font-weight: 950;
+      line-height: 1;
+      text-align:center;
+      margin: 2px 0 0;
+      letter-spacing: 1px;
+    }
+
+    .midIcon{
+      display:flex; align-items:center; justify-content:center;
+      color: rgba(255,255,255,.65);
+      font-weight:800;
+    }
+
+    .setsRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .setsCol{
+      flex:1;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      padding: 12px;
+      min-height: 84px;
+    }
+    .setsLabel{
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing:.2px;
+      margin: 0 0 10px 0;
+      text-transform: uppercase;
+    }
+
+    .setList{
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      align-items:center; /* centered */
+      justify-content:flex-start;
+    }
+    .setItem{
+      width: 100%;
+      max-width: 260px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+      font-weight: 900;
+      letter-spacing:.4px;
+    }
+    .chipA{ color: #cfe0ff; }
+    .chipB{ color: #ffe2c6; }
+    .sep{ opacity:.55; font-weight:900; }
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .cbtn{
+      padding: 14px 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight: 900;
+      font-size: 16px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cbtn.blue{ border-color: rgba(47,123,255,.45); background: rgba(47,123,255,.18); }
+    .cbtn.orange{ border-color: rgba(255,154,60,.45); background: rgba(255,154,60,.15); }
+    .cbtn.warn{ border-color: rgba(255,93,93,.45); background: rgba(255,93,93,.12); }
+    .cbtn.good{ border-color: rgba(65,211,138,.45); background: rgba(65,211,138,.12); }
+    .cbtn.neutral{ border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.06); }
+
+    .footerNote{
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align:center;
+    }
+
+    /* Overlay message */
+    .toast{
+      position: fixed;
+      left: 12px; right: 12px;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 50px rgba(0,0,0,.45);
+      color: var(--text);
+      font-weight: 700;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .22s ease;
+      pointer-events:none;
+      z-index: 999;
+    }
+    .toast.show{opacity:1; transform: translateY(0);}
+    .toast small{display:block; font-weight:600; color: var(--muted); margin-top: 4px;}
+
+    /* "Done" result layout */
+    .resultTitle{
+      text-align:center;
+      font-weight: 950;
+      font-size: 26px;
+      margin: 6px 0 2px;
+      letter-spacing:.4px;
+    }
+    .resultScore{
+      display:flex; align-items:center; justify-content:center;
+      gap: 10px;
+      margin: 10px 0 10px;
+      font-weight: 950;
+      font-size: 52px;
+      letter-spacing: 1px;
+    }
+    .badge{
+      padding: 10px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      min-width: 92px;
+      text-align:center;
+    }
+    .badge.blue{background: rgba(47,123,255,.18); border-color: rgba(47,123,255,.35);}
+    .badge.orange{background: rgba(255,154,60,.15); border-color: rgba(255,154,60,.35);}
+    .doneTop{
+      display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    @media (max-width: 420px){
+      .brand{font-size: 18px;}
+      .bigScore{font-size: 58px;}
+      .btn{font-size: 17px;}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <span class="dot"></span>
+        <span>Table Tennis For Life — Live Score Card</span>
+      </div>
+      <div class="pill" id="statusPill"><span class="statusDot" id="statusDot"></span><span id="statusText">Starting...</span></div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: main -->
+      <div class="panel" id="mainPanel">
+        <div class="panelHeader">
+          <div>
+            <h2 id="leftTitle">Setup</h2>
+            <p class="sub" id="leftSub">Name players, choose who starts, then Start match</p>
+          </div>
+          <div class="pill"><span>Role:</span> <b id="roleBadge">...</b></div>
+        </div>
+
+        <div class="panelBody" id="leftBody">
+          <!-- Setup view -->
+          <div id="setupView">
+            <div class="hint">
+              This page is designed for iPhone scoring + live watching. Share the <strong>same room URL</strong> with watchers.
+              <div class="stateLine">
+                <span class="stateBadge idle" id="roomStateBadge"><span class="miniDot"></span><span id="roomStateText">Room: idle</span></span>
+                <span style="color:var(--muted);font-size:12px;" id="roomStateMsg"></span>
+              </div>
+              <div style="margin-top:10px;">
+                <strong>Tip:</strong> Use different rooms for parallel matches, like <code>?room=table1</code> and <code>?room=table2</code>.
+              </div>
+            </div>
+
+            <div class="form">
+              <div class="field">
+                <label>First player (Blue)</label>
+                <input id="nameA" placeholder="First player" maxlength="22" />
+              </div>
+              <div class="field">
+                <label>Second player (Orange)</label>
+                <input id="nameB" placeholder="Second player" maxlength="22" />
+              </div>
+
+              <div class="field">
+                <label>Who starts? (Toss winner)</label>
+                <select id="tossWinner">
+                  <option value="A">First player</option>
+                  <option value="B">Second player</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Best of</label>
+                <select id="bestOf">
+                  <option value="5" selected>5</option>
+                  <option value="7">7</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Points to win</label>
+                <input id="pointsToWin" type="number" min="1" max="99" value="11" />
+              </div>
+              <div class="field">
+                <label>Scorer PIN (only scorer needs)</label>
+                <input id="pin" type="password" inputmode="numeric" maxlength="8" placeholder="••••" />
+              </div>
+
+              <div class="field full btnRow">
+                <button class="btn primary" id="startBtn">▶ Start match</button>
+                <button class="btn secondary" id="watchBtn">👁 Watch live</button>
+              </div>
+            </div>
+
+            <div class="smallNote">Watchers do not need a PIN. Only the scorer can start and update the match.</div>
+          </div>
+
+          <!-- Live view -->
+          <div id="liveView" style="display:none;">
+            <div class="scoreTop">
+              <div>
+                <p class="matchTitle" id="matchTitle">Live</p>
+                <p class="matchMeta" id="matchMeta">Game 1 • Best of 5</p>
+              </div>
+              <div class="pill" id="roomPill"><span>Room:</span> <b id="roomText"></b></div>
+            </div>
+
+            <div class="scoreGrid" id="scoreArea">
+              <div class="scoreCard blue">
+                <div class="nameRow">
+                  <p class="pname" id="liveNameA">Player A</p>
+                  <span class="serve" id="serveA" style="display:none;">Serve</span>
+                </div>
+                <div class="bigScore" id="scoreA">0</div>
+              </div>
+
+              <div class="midIcon">↺</div>
+
+              <div class="scoreCard orange">
+                <div class="nameRow">
+                  <p class="pname" id="liveNameB">Player B</p>
+                  <span class="serve" id="serveB" style="display:none;">Serve</span>
+                </div>
+                <div class="bigScore" id="scoreB">0</div>
+              </div>
+            </div>
+
+            <div class="setsRow">
+              <div class="setsCol">
+                <div class="setsLabel">Games (history)</div>
+                <div class="setList" id="setList"></div>
+              </div>
+            </div>
+
+            <div class="controls" id="scorerControls" style="display:none;">
+              <button class="cbtn blue" id="ptA">+1 (Blue)</button>
+              <button class="cbtn orange" id="ptB">+1 (Orange)</button>
+              <button class="cbtn neutral" id="undoBtn">Undo</button>
+              <button class="cbtn neutral" id="swapServeBtn">Swap Serve</button>
+              <button class="cbtn warn" id="cancelMatchBtn">Cancel</button>
+              <button class="cbtn warn" id="endMatchBtn">End Match</button>
+              <button class="cbtn good" id="restartMatchBtn">Restart</button>
+              <button class="cbtn good" id="newMatchBtn">New Match</button>
+            </div>
+
+            <div class="footerNote" id="liveFooter">TTFL Live • Single scorer • Unlimited watchers</div>
+          </div>
+
+          <!-- Result view -->
+          <div id="resultView" style="display:none;">
+            <div class="doneTop">
+              <span>Done</span>
+              <button class="cbtn good" id="downloadBtn" style="max-width:220px;">Download Scorecard</button>
+            </div>
+            <div class="resultTitle">Result</div>
+            <div class="resultScore">
+              <div class="badge blue" id="finalSetsA">0</div>
+              <div style="opacity:.7;">:</div>
+              <div class="badge orange" id="finalSetsB">0</div>
+            </div>
+
+            <div class="setsRow">
+              <div class="setsCol">
+                <div class="setsLabel">Sets</div>
+                <div class="setList" id="finalSetList"></div>
+              </div>
+            </div>
+
+            <div class="controls" id="resultControls">
+              <button class="cbtn good" id="resultNewMatchBtn">Start New Match</button>
+              <button class="cbtn neutral" id="backToSetupBtn">Back to Setup</button>
+            </div>
+
+            <div class="footerNote">Tip: Add this page to Home Screen for quick scoring tomorrow.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: connection -->
+      <div class="panel">
+        <div class="panelHeader">
+          <div>
+            <h2>Connection</h2>
+            <p class="sub">Saved in this browser</p>
+          </div>
+          <div class="pill"><span>Mode:</span> <b id="modeText">...</b></div>
+        </div>
+        <div class="panelBody">
+          <div class="hint" style="margin-bottom:12px;">
+            <strong>Scorer link</strong> owns the room. If a second scorer opens the same room, they will be forced into watch mode.
+            <br><br>
+            Use different rooms for parallel matches: <code>room=table1</code>, <code>room=table2</code>, etc.
+          </div>
+
+          <div class="form" style="grid-template-columns:1fr;">
+            <div class="field">
+              <label>Room</label>
+              <input id="roomInput" placeholder="table1" />
+            </div>
+            <div class="field">
+              <label>Share (watch)</label>
+              <input id="shareWatch" readonly />
+            </div>
+            <div class="field">
+              <label>Share (scorer)</label>
+              <input id="shareScorer" readonly />
+            </div>
+            <div class="btnRow" style="grid-template-columns:1fr;">
+              <button class="btn secondary" id="copyWatch">Copy Watch Link</button>
+              <button class="btn secondary" id="copyScorer">Copy Scorer Link</button>
+            </div>
+          </div>
+
+          <div class="smallNote" id="connNote">If you see “Permission denied”, fix Rules and Anonymous Auth.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- html2canvas for download -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <script type="module">
+    /*******
+     * 0) URL + params
+     *******/
+    const pageUrl = new window.URL(window.location.href);
+    const qp = pageUrl.searchParams;
+
+    const roleParam = (qp.get("role") || "watch").toLowerCase();   // watch | scorer
+    const roomParam = (qp.get("room") || localStorage.getItem("ttfl_room") || "table1").trim();
+
+    /*******
+     * 1) UI helpers
+     *******/
+    const $ = (id) => document.getElementById(id);
+    const toastEl = $("toast");
+
+    function toast(msg, sub = "") {
+      toastEl.innerHTML = `${msg}${sub ? `<small>${sub}</small>` : ""}`;
+      toastEl.classList.add("show");
+      setTimeout(() => toastEl.classList.remove("show"), 2600);
+    }
+
+    function setStatus(text, kind="idle") {
+      $("statusText").textContent = text;
+      const dot = $("statusDot");
+      const color = {
+        idle: "rgba(255,255,255,.35)",
+        ok: "var(--good)",
+        warn: "rgba(255,255,255,.55)",
+        bad: "var(--bad)"
+      }[kind] || "rgba(255,255,255,.35)";
+      dot.style.background = color;
+    }
+
+    function showView(view) {
+      $("setupView").style.display = (view === "setup") ? "" : "none";
+      $("liveView").style.display  = (view === "live")  ? "" : "none";
+      $("resultView").style.display= (view === "result")? "" : "none";
+      $("leftTitle").textContent = view === "setup" ? "Setup" : (view === "result" ? "Match Result" : "Live");
+      $("leftSub").textContent = view === "setup"
+        ? "Name players, choose who starts, then Start match"
+        : (view === "result" ? "Final score saved in match history" : "Live score updates instantly for watchers");
+    }
+
+    function clampName(s, fallback) {
+      const t = (s || "").trim();
+      return t.length ? t.slice(0,22) : fallback;
+    }
+
+    function clone(obj){
+      try { return structuredClone(obj); } catch { return JSON.parse(JSON.stringify(obj)); }
+    }
+
+    function setRoomStateBadge(state, msg=""){
+      const badge = $("roomStateBadge");
+      const text = $("roomStateText");
+      const msgEl = $("roomStateMsg");
+
+      badge.classList.remove("idle","scheduled","live","cancelled");
+      badge.classList.add(state || "idle");
+
+      const label = ({
+        idle: "Room: idle",
+        scheduled: "Room: scheduled",
+        live: "Room: live",
+        cancelled: "Room: cancelled"
+      })[state] || "Room: idle";
+
+      text.textContent = label;
+      msgEl.textContent = msg || "";
+    }
+
+    /*******
+     * 2) Firebase (Realtime Database)
+     *******/
+    const firebaseConfig = {
+      apiKey: "AIzaSyD221i61Z824UbXSLRT-UZs7w60KNzh5nY",
+      authDomain: "ttfl-live-score.firebaseapp.com",
+      databaseURL: "https://ttfl-live-score-default-rtdb.firebaseio.com",
+      projectId: "ttfl-live-score",
+      storageBucket: "ttfl-live-score.firebasestorage.app",
+      messagingSenderId: "698939580201",
+      appId: "1:698939580201:web:80540510de083f676ce138"
+    };
+
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, get, set, update, onValue, off, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
+
+    let uid = null;
+
+    /*******
+     * 3) Data model
+     *******/
+    const roomId = roomParam.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0,30) || "table1";
+    localStorage.setItem("ttfl_room", roomId);
+
+    const roomRef = ref(db, `rooms/${roomId}`);
+    let currentMatchId = null;
+    let currentMatchUnsub = null;
+    let lastRoomSnapshot = null;
+
+    const state = {
+      role: roleParam === "scorer" ? "scorer" : "watch",
+      match: null,
+      undoStack: []
+    };
+
+    /*******
+     * 4) UI init
+     *******/
+    $("roleBadge").textContent = state.role;
+    $("modeText").textContent = state.role;
+    $("roomText").textContent = roomId;
+    $("roomInput").value = roomId;
+
+    // Links
+    function buildLink(role, room) {
+      const u = new window.URL(window.location.href);
+      u.searchParams.set("role", role);
+      u.searchParams.set("room", room);
+      u.searchParams.set("v", "1");
+      return u.origin + u.pathname + "?" + u.searchParams.toString();
+    }
+    function refreshShareLinks() {
+      const room = ($("roomInput").value || "table1").trim().toLowerCase().replace(/[^a-z0-9_-]/g,"").slice(0,30) || "table1";
+      $("shareWatch").value = buildLink("watch", room);
+      $("shareScorer").value = buildLink("scorer", room);
+    }
+    refreshShareLinks();
+    $("roomInput").addEventListener("input", refreshShareLinks);
+
+    async function copyToClipboard(val) {
+      try {
+        await navigator.clipboard.writeText(val);
+        toast("Copied");
+      } catch {
+        toast("Copy failed", "Tap and copy manually.");
+      }
+    }
+    $("copyWatch").addEventListener("click", () => copyToClipboard($("shareWatch").value));
+    $("copyScorer").addEventListener("click", () => copyToClipboard($("shareScorer").value));
+
+    // Setup inputs
+    function refreshTossOptions() {
+      const a = clampName($("nameA").value, "First player");
+      const b = clampName($("nameB").value, "Second player");
+      const tw = $("tossWinner");
+      const was = tw.value;
+      tw.innerHTML = `
+        <option value="A">${a}</option>
+        <option value="B">${b}</option>
+      `;
+      tw.value = (was === "B") ? "B" : "A";
+    }
+    $("nameA").addEventListener("input", refreshTossOptions);
+    $("nameB").addEventListener("input", refreshTossOptions);
+    refreshTossOptions();
+
+    $("watchBtn").addEventListener("click", () => {
+      state.role = "watch";
+      $("roleBadge").textContent = state.role;
+      $("modeText").textContent = state.role;
+      $("scorerControls").style.display = "none";
+      toast("Watch mode enabled");
+      showView("live");
+    });
+
+    /*******
+     * 5) Match logic helpers
+     *******/
+    function setsToWin(bestOf) {
+      return Math.ceil(Number(bestOf) / 2);
+    }
+
+    function isGameWon(a, b, ptsToWin) {
+      const win = Number(ptsToWin);
+      if (a >= win || b >= win) {
+        const diff = Math.abs(a - b);
+        return diff >= 2;
+      }
+      return false;
+    }
+
+    function computeServer(match) {
+      // serve changes every 2 points; at deuce changes every 1
+      const total = match.scoreA + match.scoreB;
+      const deuce = match.scoreA >= (match.pointsToWin - 1) && match.scoreB >= (match.pointsToWin - 1);
+      const interval = deuce ? 1 : 2;
+
+      const start = match.tossWinner; // 'A' or 'B' starts serve
+      const flips = Math.floor(total / interval);
+      return (flips % 2 === 0) ? start : (start === "A" ? "B" : "A");
+    }
+
+    function renderLive(match) {
+      if (!match) return;
+
+      $("matchTitle").textContent = `${match.nameA} vs ${match.nameB}`;
+      $("matchMeta").textContent = `Game ${match.gameIndex} • Best of ${match.bestOf}`;
+
+      $("liveNameA").textContent = match.nameA;
+      $("liveNameB").textContent = match.nameB;
+      $("scoreA").textContent = match.scoreA;
+      $("scoreB").textContent = match.scoreB;
+
+      const srv = computeServer(match);
+      $("serveA").style.display = srv === "A" ? "" : "none";
+      $("serveB").style.display = srv === "B" ? "" : "none";
+
+      const list = $("setList");
+      list.innerHTML = "";
+      (match.sets || []).forEach((s) => {
+        const el = document.createElement("div");
+        el.className = "setItem";
+        el.innerHTML = `
+          <span class="chipA">${s.a}</span>
+          <span class="sep">:</span>
+          <span class="chipB">${s.b}</span>
+        `;
+        list.appendChild(el);
+      });
+
+      if (!match.sets || match.sets.length === 0) {
+        const el = document.createElement("div");
+        el.className = "setItem";
+        el.style.opacity = ".65";
+        el.textContent = "No games finished yet";
+        list.appendChild(el);
+      }
+    }
+
+    function renderResult(match) {
+      $("finalSetsA").textContent = match.setsA;
+      $("finalSetsB").textContent = match.setsB;
+
+      const list = $("finalSetList");
+      list.innerHTML = "";
+      (match.sets || []).forEach((s) => {
+        const el = document.createElement("div");
+        el.className = "setItem";
+        el.innerHTML = `
+          <span class="chipA">${s.a}</span>
+          <span class="sep">:</span>
+          <span class="chipB">${s.b}</span>
+        `;
+        list.appendChild(el);
+      });
+    }
+
+    function canScoreThisMatch(match) {
+      return state.role === "scorer" && match && match.ownerUid && uid && match.ownerUid === uid;
+    }
+
+    /*******
+     * 6) Subscribe room -> current match
+     *******/
+    function subscribeMatch(matchId) {
+      if (!matchId) return;
+      if (currentMatchUnsub) { currentMatchUnsub(); currentMatchUnsub = null; }
+
+      const matchRef = ref(db, `matches/${matchId}`);
+      const handler = (snap) => {
+        const m = snap.val();
+        if (!m) return;
+
+        state.match = m;
+
+        // If another scorer owns it, force watch mode
+        if (state.role === "scorer" && uid && m.ownerUid && m.ownerUid !== uid) {
+          state.role = "watch";
+          $("roleBadge").textContent = state.role;
+          $("modeText").textContent = state.role;
+          $("scorerControls").style.display = "none";
+          toast("Another scorer owns this match.", "You are in watch mode.");
+        }
+
+        if (m.status === "ended") {
+          showView("result");
+          renderResult(m);
+        } else {
+          showView("live");
+          renderLive(m);
+        }
+
+        $("scorerControls").style.display = canScoreThisMatch(m) ? "" : "none";
+      };
+
+      onValue(matchRef, handler);
+      currentMatchUnsub = () => off(matchRef, "value", handler);
+    }
+
+    function applyRoomSnapshot(room){
+      lastRoomSnapshot = room || null;
+
+      const roomState = (room && room.status) ? room.status : "idle";
+      const msg = (room && room.message) ? room.message : "";
+      setRoomStateBadge(roomState, msg);
+
+      // No current match -> watchers should see setup and the room state badge
+      if (!room || !room.currentMatchId) {
+        currentMatchId = null;
+        if (state.role === "watch") {
+          showView("setup");
+        } else {
+          // scorer can stay on setup too
+          showView("setup");
+        }
+        return;
+      }
+
+      // Room has active match
+      if (room.currentMatchId !== currentMatchId) {
+        currentMatchId = room.currentMatchId;
+        subscribeMatch(currentMatchId);
+      }
+    }
+
+    onValue(roomRef, (snap) => applyRoomSnapshot(snap.val()));
+
+    /*******
+     * 7) Auth + start
+     *******/
+    setStatus("Connecting...", "warn");
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        uid = user.uid;
+        setStatus("Connected", "ok");
+      }
+    });
+
+    try {
+      await signInAnonymously(auth);
+      setStatus("Connected", "ok");
+    } catch (e) {
+      setStatus("Auth failed", "bad");
+      toast("Auth failed", "Enable Anonymous Auth in Firebase.");
+      console.error(e);
+    }
+
+    /*******
+     * 8) Start match (scorer)
+     *******/
+    async function setRoomStatusPatch(patch){
+      try{
+        await update(roomRef, { ...patch, updatedAt: serverTimestamp() });
+      }catch(e){
+        console.error(e);
+      }
+    }
+
+    $("startBtn").addEventListener("click", async () => {
+      state.role = "scorer";
+      $("roleBadge").textContent = state.role;
+      $("modeText").textContent = state.role;
+
+      const pin = ($("pin").value || "").trim();
+      if (!pin) { toast("Enter scorer PIN"); return; }
+
+      const nameA = clampName($("nameA").value, "First player");
+      const nameB = clampName($("nameB").value, "Second player");
+      const tossWinner = $("tossWinner").value === "B" ? "B" : "A";
+      const bestOf = Number($("bestOf").value || 5);
+      const pointsToWin = Number($("pointsToWin").value || 11);
+
+      const matchId = `m_${Date.now()}_${Math.random().toString(16).slice(2,8)}`;
+
+      const match = {
+        matchId,
+        roomId,
+        ownerUid: uid,
+        pinHash: btoa(pin).slice(0,16), // casual use only
+        nameA, nameB,
+        bestOf,
+        pointsToWin,
+        tossWinner,
+        scoreA: 0,
+        scoreB: 0,
+        sets: [],
+        setsA: 0,
+        setsB: 0,
+        gameIndex: 1,
+        status: "live",
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+
+      try {
+        await set(ref(db, `matches/${matchId}`), match);
+        await setRoomStatusPatch({ currentMatchId: matchId, status: "live", message: "Match is live" });
+        state.undoStack = [];
+        toast("Match started");
+      } catch (e) {
+        console.error(e);
+        setStatus("Permission denied", "bad");
+        toast("PERMISSION_DENIED", "Check Rules + Anonymous Auth.");
+      }
+    });
+
+    /*******
+     * 9) Scoring actions (owner only)
+     *******/
+    async function updateMatchAtomic(fn) {
+      if (!currentMatchId) return;
+      const matchRef = ref(db, `matches/${currentMatchId}`);
+
+      try {
+        await runTransaction(matchRef, (cur) => {
+          if (!cur) return cur;
+          if (!uid || cur.ownerUid !== uid) return cur; // owner-only
+          const next = fn(clone(cur));
+          next.updatedAt = Date.now();
+          return next;
+        });
+      } catch (e) {
+        console.error(e);
+        toast("Update failed", "Permission or connectivity issue.");
+      }
+    }
+
+    function pushUndo(snapshot) {
+      state.undoStack.push(snapshot);
+      if (state.undoStack.length > 25) state.undoStack.shift();
+    }
+
+    async function addPoint(which) {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer for this match"); return; }
+
+      pushUndo(clone(m));
+
+      await updateMatchAtomic((cur) => {
+        if (cur.status !== "live") return cur;
+
+        if (which === "A") cur.scoreA += 1;
+        else cur.scoreB += 1;
+
+        if (isGameWon(cur.scoreA, cur.scoreB, cur.pointsToWin)) {
+          cur.sets = cur.sets || [];
+          cur.sets.push({ a: cur.scoreA, b: cur.scoreB });
+
+          if (cur.scoreA > cur.scoreB) cur.setsA += 1;
+          else cur.setsB += 1;
+
+          cur.scoreA = 0;
+          cur.scoreB = 0;
+          cur.gameIndex = (cur.sets.length + 1);
+
+          const need = setsToWin(cur.bestOf);
+          if (cur.setsA >= need || cur.setsB >= need) {
+            cur.status = "ended";
+          }
+        }
+        return cur;
+      });
+
+      // If it ended, mark room ended too (watchers will see result via match subscription)
+      const m2 = state.match;
+      if (m2 && m2.status === "ended") {
+        await setRoomStatusPatch({ status: "ended", message: "Match ended" });
+      }
+    }
+
+    $("ptA").addEventListener("click", () => addPoint("A"));
+    $("ptB").addEventListener("click", () => addPoint("B"));
+
+    $("undoBtn").addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+      const prev = state.undoStack.pop();
+      if (!prev) { toast("Nothing to undo"); return; }
+
+      try {
+        await set(ref(db, `matches/${currentMatchId}`), { ...prev, updatedAt: Date.now() });
+        toast("Undone");
+      } catch (e) {
+        console.error(e);
+        toast("Undo failed");
+      }
+    });
+
+    $("swapServeBtn").addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+
+      pushUndo(clone(m));
+
+      await updateMatchAtomic((cur) => {
+        cur.tossWinner = (cur.tossWinner === "A") ? "B" : "A";
+        return cur;
+      });
+      toast("Serve swapped");
+    });
+
+    $("endMatchBtn").addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+
+      await updateMatchAtomic((cur) => {
+        cur.status = "ended";
+        return cur;
+      });
+      await setRoomStatusPatch({ status: "ended", message: "Match ended" });
+      toast("Match ended");
+    });
+
+    // Cancel: removes currentMatchId so watchers go back to setup and see "cancelled"
+    $("cancelMatchBtn").addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+
+      try{
+        await setRoomStatusPatch({ currentMatchId: null, status: "cancelled", message: "Match cancelled", lastMatchId: currentMatchId || null });
+        toast("Cancelled", "Watchers will see cancellation.");
+        showView("setup");
+      }catch(e){
+        console.error(e);
+        toast("Cancel failed");
+      }
+    });
+
+    // Restart: keep same matchId but reset scores/sets to zero and room becomes live
+    $("restartMatchBtn").addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+
+      pushUndo(clone(m));
+
+      await updateMatchAtomic((cur) => {
+        cur.scoreA = 0;
+        cur.scoreB = 0;
+        cur.sets = [];
+        cur.setsA = 0;
+        cur.setsB = 0;
+        cur.gameIndex = 1;
+        cur.status = "live";
+        return cur;
+      });
+
+      await setRoomStatusPatch({ status: "live", message: "Match restarted", currentMatchId: currentMatchId });
+      toast("Restarted", "Scores reset to 0–0.");
+    });
+
+    // New match: goes to setup but does not change room until Start is pressed
+    $("newMatchBtn").addEventListener("click", async () => {
+      showView("setup");
+      toast("Ready for new match");
+      // Optional: show scheduled state so watchers know match is being prepared
+      if (state.role === "scorer") {
+        await setRoomStatusPatch({ currentMatchId: null, status: "scheduled", message: "Scorer is setting up a match" });
+      }
+    });
+
+    $("resultNewMatchBtn").addEventListener("click", async () => {
+      showView("setup");
+      toast("Start a new match");
+      if (state.role === "scorer") {
+        await setRoomStatusPatch({ currentMatchId: null, status: "scheduled", message: "Scorer is setting up a match" });
+      }
+    });
+
+    $("backToSetupBtn").addEventListener("click", () => {
+      showView("setup");
+    });
+
+    /*******
+     * 10) Download Scorecard (PNG)
+     *******/
+    async function downloadScorecard() {
+      const panel = $("mainPanel");
+      toast("Preparing download...");
+      try {
+        const canvas = await window.html2canvas(panel, {
+          backgroundColor: null,
+          scale: 2,
+          useCORS: true
+        });
+        const dataUrl = canvas.toDataURL("image/png");
+
+        const a = document.createElement("a");
+        const ts = new Date().toISOString().replace(/[:.]/g,"-");
+        a.download = `TTFL-scorecard-${roomId}-${ts}.png`;
+        a.href = dataUrl;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        toast("Downloaded", "Scorecard saved as image.");
+      } catch (e) {
+        console.error(e);
+        toast("Download failed", "Try Safari (best on iPhone).");
+      }
+    }
+    $("downloadBtn").addEventListener("click", downloadScorecard);
+
+    /*******
+     * 11) Initial view
+     *******/
+    if (state.role === "watch") {
+      showView("setup"); // will auto move to live when room has currentMatchId
+    } else {
+      showView("setup");
+    }
+
+    // If config placeholders not replaced, warn clearly
+    if ((firebaseConfig.apiKey || "").includes("PASTE_")) {
+      setStatus("Config missing", "bad");
+      toast("Firebase config not pasted", "Paste firebaseConfig (including databaseURL).");
+    }
+
+  </script>
+</body>
+</html>
