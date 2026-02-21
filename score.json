@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-02-21T04:59:47.471Z",
+  "updatedAt": "2026-02-21T05:00:33.654Z",
   "updatedBy": "scorer",
   "match": {
     "bestOf": 5,
@@ -9,7 +9,7 @@
     "gamesA": 0,
     "gamesB": 0,
     "pointsA": 0,
-    "pointsB": 2,
+    "pointsB": 3,
     "server": "B",
     "matchOver": false,
     "winner": null,
