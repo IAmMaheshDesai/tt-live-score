@@ -485,243 +485,10 @@
       .controls{grid-template-columns: 1fr 1fr 1fr;}
     }
 
-  
-    /* Enhancements (no layout redesign) */
-    .brand{font-size:13px;font-weight:600;color:rgba(255,255,255,.75);} /* Typography adjustment */
-
-    .serveDot{
-      width:12px;height:12px;border-radius:999px;
-      background:#0b5e3c;
-      box-shadow: 0 0 8px #00ff9d, 0 0 16px rgba(0,255,157,.70);
-      display:inline-block;
-      margin-left:8px;
-    }
-
-    .matchScore{
-      margin-top: 8px;
-      font-size: 18px;
-      font-weight: 900;
-      color: rgba(255,255,255,.78);
-      text-align:center;
-      letter-spacing:.4px;
-    }
-
-    .timeoutTag{
-      margin-top: 6px;
-      font-size: 12px;
-      font-weight: 900;
-      color: rgba(255,255,255,.72);
-      text-align:center;
-      letter-spacing:.6px;
-      text-transform: uppercase;
-    }
-
-    .timerBar{
-      position: fixed;
-      top: max(10px, env(safe-area-inset-top));
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      padding: 10px 14px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(10px);
-      box-shadow: 0 20px 50px rgba(0,0,0,.45);
-      color: rgba(255,255,255,.92);
-      font-weight: 900;
-      display:none;
-      min-width: 210px;
-      text-align:center;
-    }
-    .timerBar .bar{
-      height: 6px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.18);
-      overflow:hidden;
-      margin-top: 8px;
-    }
-    .timerBar .bar > i{
-      display:block;
-      height: 100%;
-      width: 100%;
-      background: rgba(255,154,60,.85);
-      transform-origin:left center;
-      transform: scaleX(1);
-    }
-
-    /* history row: score | score ..... (duration) right */
-    .setItem{
-      max-width: 520px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap: 12px;
-      padding: 10px 12px;
-    }
-    .setLeft{
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap: 10px;
-      min-width: 120px;
-      font-weight: 950;
-    }
-    .pipe{
-      opacity:.7;
-      font-weight: 950;
-      color: rgba(255,255,255,.55);
-    }
-    .dur{
-      margin-left:auto;
-      font-size: 12.5px;
-      font-weight: 900;
-      color: rgba(255,154,60,.90);
-      letter-spacing:.4px;
-      white-space:nowrap;
-    }
-
-    /* Chat (bottom panel) */
-    .chatWrap{
-      margin-top: 14px;
-      border-radius: 18px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.05);
-      overflow:hidden;
-    }
-    .chatHdr{
-      display:flex;align-items:center;justify-content:space-between;
-      padding: 10px 12px;
-      border-bottom: 1px solid rgba(255,255,255,.10);
-      font-weight: 900;
-      color: rgba(255,255,255,.85);
-      font-size: 13px;
-      letter-spacing:.3px;
-    }
-    .chatList{
-      max-height: 180px;
-      overflow:auto;
-      padding: 10px 12px;
-      display:flex;
-      flex-direction:column;
-      gap: 10px;
-      scroll-behavior:smooth;
-    }
-    .chatMsg{
-      font-size: 13px;
-      line-height: 1.25;
-      color: rgba(255,255,255,.86);
-      word-break: break-word;
-    }
-    .chatMsg b{color: rgba(255,255,255,.92);}
-    .chatMsg small{display:block;color: rgba(255,255,255,.55);font-weight:700;margin-top:3px;}
-    .chatInput{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      padding: 10px 12px 12px;
-      border-top: 1px solid rgba(255,255,255,.10);
-    }
-    .chatRow{
-      display:grid;
-      grid-template-columns: 120px 1fr 92px;
-      gap: 10px;
-      align-items:center;
-    }
-    .chatRow input{
-      border-radius: 14px;
-      padding: 12px 12px;
-      font-size: 14px;
-    }
-    .chatRow button{
-      border-radius: 14px;
-      padding: 12px 10px;
-      font-size: 14px;
-      font-weight: 900;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.08);
-      color: rgba(255,255,255,.92);
-      cursor:pointer;
-    }
-
-    /* Score animations */
-    @keyframes pulsePop{
-      0%{transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,255,255,0));}
-      35%{transform: scale(1.06); filter: drop-shadow(0 10px 16px rgba(0,0,0,.35));}
-      100%{transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,255,255,0));}
-    }
-    .bigScore.pop{animation: pulsePop .22s ease-out;}
-
-    /* Deuce banner + ADV */
-    .banner{
-      margin-top: 10px;
-      padding: 10px 12px;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.28);
-      color: rgba(255,255,255,.92);
-      font-weight: 950;
-      text-align:center;
-      display:none;
-    }
-    .banner.on{
-      display:block;
-      box-shadow: 0 0 26px rgba(255,154,60,.22);
-      border-color: rgba(255,154,60,.35);
-    }
-    .adv{
-      display:inline-block;
-      margin-left: 8px;
-      padding: 3px 8px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 950;
-      letter-spacing:.7px;
-      background: rgba(255,154,60,.18);
-      border: 1px solid rgba(255,154,60,.35);
-      color: rgba(255,154,60,.95);
-      vertical-align: middle;
-    }
-
-    /* Game won overlay */
-    .winOverlay{
-      position: fixed;
-      inset: 0;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index: 1200;
-      background: rgba(0,0,0,.55);
-      backdrop-filter: blur(6px);
-    }
-    .winOverlay.on{display:flex;}
-    .winCard{
-      width: min(420px, calc(100% - 24px));
-      border-radius: 22px;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(10,12,16,.92);
-      padding: 18px 16px;
-      text-align:center;
-      box-shadow: 0 30px 70px rgba(0,0,0,.55);
-    }
-    .winCard h3{
-      margin: 0;
-      font-size: 22px;
-      font-weight: 950;
-      letter-spacing:.3px;
-    }
-    .winCard p{
-      margin: 8px 0 0;
-      color: rgba(255,255,255,.72);
-      font-weight: 800;
-    }
-
   </style>
 </head>
 
 <body>
-  <div class="timerBar" id="timeoutTimer">Timeout • <span id="timerText">60</span>s<div class="bar"><i id="timerFill"></i></div></div>
-  <div class="winOverlay" id="winOverlay"><div class="winCard"><h3 id="winTitle">Game Won</h3><p id="winSub">Next game starting…</p></div></div>
   <div class="wrap">
     <div class="topbar">
       <div class="brand">
@@ -815,7 +582,7 @@
                   <p class="pname" id="liveNameA">Player A</p>
                   <span class="serve" id="serveA" style="display:none;" aria-label="Server"></span>
                 </div>
-                <div class="bigScore" id="scoreA">0</div><div class="matchScore" id="matchScoreA">0 - 0</div><div class="timeoutTag" id="timeoutA"></div>
+                <div class="bigScore" id="scoreA">0</div>
               </div>
 
               <div class="midIcon">↺</div>
@@ -825,10 +592,9 @@
                   <p class="pname" id="liveNameB">Player B</p>
                   <span class="serve" id="serveB" style="display:none;" aria-label="Server"></span>
                 </div>
-                <div class="bigScore" id="scoreB">0</div><div class="matchScore" id="matchScoreB">0 - 0</div><div class="timeoutTag" id="timeoutB"></div>
+                <div class="bigScore" id="scoreB">0</div>
               </div>
             </div>
-            <div class="banner" id="deuceBanner">DEUCE</div>
 
             <div class="setsRow">
               <div class="setsCol">
@@ -846,22 +612,6 @@
               <button class="cbtn warn" id="endMatchBtn">End Match</button>
               <button class="cbtn good" id="restartMatchBtn">Restart</button>
               <button class="cbtn good" id="newMatchBtn">New Match</button>
-            </div>
-
-            
-            <div class="chatWrap" id="chatWrap">
-              <div class="chatHdr">
-                <span>Live Chat</span>
-                <span style="color:rgba(255,255,255,.55);font-weight:800;" id="chatStatus">—</span>
-              </div>
-              <div class="chatList" id="chatList"></div>
-              <div class="chatInput">
-                <div class="chatRow">
-                  <input id="chatName" placeholder="Name" maxlength="18" />
-                  <input id="chatText" placeholder="Type a message…" maxlength="200" />
-                  <button id="chatSend">Send</button>
-                </div>
-              </div>
             </div>
 
             <div class="footerNote" id="liveFooter">TTFL Live • Single scorer • Unlimited watchers</div>
@@ -948,27 +698,25 @@
   <div class="toast" id="toast"></div>
 
   <!-- html2canvas for download -->
-  
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
-  <script>
-  (function(){
+  <script type="module">
     /*******
-     * URL + params
+     * 0) URL + params
      *******/
     const pageUrl = new window.URL(window.location.href);
     const qp = pageUrl.searchParams;
 
-    const roleParam = (qp.get("role") || "watch").toLowerCase(); // watch | scorer
+    const roleParam = (qp.get("role") || "watch").toLowerCase();   // watch | scorer
     const roomParam = (qp.get("room") || localStorage.getItem("ttfl_room") || "table1").trim();
 
+    /*******
+     * 1) UI helpers
+     *******/
     const $ = (id) => document.getElementById(id);
     const toastEl = $("toast");
 
-    function toast(msg, sub="") {
+    function toast(msg, sub = "") {
       toastEl.innerHTML = `${msg}${sub ? `<small>${sub}</small>` : ""}`;
       toastEl.classList.add("show");
       setTimeout(() => toastEl.classList.remove("show"), 2600);
@@ -979,9 +727,9 @@
       const dot = $("statusDot");
       const color = {
         idle: "rgba(255,255,255,.35)",
-        ok: "rgba(65,211,138,1)",
+        ok: "var(--good)",
         warn: "rgba(255,255,255,.55)",
-        bad: "rgba(255,93,93,1)"
+        bad: "var(--bad)"
       }[kind] || "rgba(255,255,255,.35)";
       dot.style.background = color;
     }
@@ -1001,8 +749,41 @@
       return t.length ? t.slice(0,22) : fallback;
     }
 
+
+    function fmtDur(ms){
+      const total = Math.max(0, Math.floor((Number(ms)||0)/1000));
+      const h = String(Math.floor(total/3600)).padStart(2,'0');
+      const m = String(Math.floor((total%3600)/60)).padStart(2,'0');
+      const s = String(total%60).padStart(2,'0');
+      return `${h}:${m}:${s}`;
+    }
+
+
+    function clone(obj){
+      try { return structuredClone(obj); } catch { return JSON.parse(JSON.stringify(obj)); }
+    }
+
+    function setRoomStateBadge(state, msg=""){
+      const badge = $("roomStateBadge");
+      const text = $("roomStateText");
+      const msgEl = $("roomStateMsg");
+
+      badge.classList.remove("idle","scheduled","live","cancelled");
+      badge.classList.add(state || "idle");
+
+      const label = ({
+        idle: "Room: idle",
+        scheduled: "Room: scheduled",
+        live: "Room: live",
+        cancelled: "Room: cancelled"
+      })[state] || "Room: idle";
+
+      text.textContent = label;
+      msgEl.textContent = msg || "";
+    }
+
     /*******
-     * Firebase (Realtime Database)
+     * 2) Firebase (Realtime Database)
      *******/
     const firebaseConfig = {
       apiKey: "AIzaSyD221i61Z824UbXSLRT-UZs7w60KNzh5nY",
@@ -1014,40 +795,42 @@
       appId: "1:698939580201:web:80540510de083f676ce138"
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-    const auth = firebase.auth();
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getDatabase, ref, get, set, update, onValue, off, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const auth = getAuth(app);
 
     let uid = null;
 
+    /*******
+     * 3) Data model
+     *******/
     const roomId = roomParam.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0,30) || "table1";
     localStorage.setItem("ttfl_room", roomId);
 
-    const roomRef = db.ref(`rooms/${roomId}`);
-    const presenceRef = db.ref(`rooms/${roomId}/presence`);
-    const chatRef = db.ref(`rooms/${roomId}/chat`);
-
+    const roomRef = ref(db, `rooms/${roomId}`);
     let currentMatchId = null;
-    let matchOff = null;
+    let currentMatchUnsub = null;
+    let lastRoomSnapshot = null;
 
     const state = {
       role: roleParam === "scorer" ? "scorer" : "watch",
       match: null,
-      undoStack: [],
-      lastScoreA: null,
-      lastScoreB: null,
-      lastGameWonEventAt: 0,
-      timerTick: null
+      undoStack: []
     };
 
     /*******
-     * UI init
+     * 4) UI init
      *******/
     $("roleBadge").textContent = state.role;
     $("modeText").textContent = state.role;
     $("roomText").textContent = roomId;
     $("roomInput").value = roomId;
 
+    // Links
     function buildLink(role, room) {
       const u = new window.URL(window.location.href);
       u.searchParams.set("role", role);
@@ -1074,12 +857,16 @@
     $("copyWatch").addEventListener("click", () => copyToClipboard($("shareWatch").value));
     $("copyScorer").addEventListener("click", () => copyToClipboard($("shareScorer").value));
 
+    // Setup inputs
     function refreshTossOptions() {
       const a = clampName($("nameA").value, "First player");
       const b = clampName($("nameB").value, "Second player");
       const tw = $("tossWinner");
       const was = tw.value;
-      tw.innerHTML = `<option value="A">${a}</option><option value="B">${b}</option>`;
+      tw.innerHTML = `
+        <option value="A">${a}</option>
+        <option value="B">${b}</option>
+      `;
       tw.value = (was === "B") ? "B" : "A";
     }
     $("nameA").addEventListener("input", refreshTossOptions);
@@ -1093,67 +880,33 @@
       $("scorerControls").style.display = "none";
       toast("Watch mode enabled");
       showView("live");
-      updatePresenceRole();
     });
 
     /*******
-     * Helpers
+     * 5) Match logic helpers
      *******/
-    function setsToWin(bestOf) { return Math.ceil(Number(bestOf) / 2); }
+    function setsToWin(bestOf) {
+      return Math.ceil(Number(bestOf) / 2);
+    }
 
     function isGameWon(a, b, ptsToWin) {
       const win = Number(ptsToWin);
       if (a >= win || b >= win) {
-        return Math.abs(a - b) >= 2;
+        const diff = Math.abs(a - b);
+        return diff >= 2;
       }
       return false;
     }
 
-    function isDeuce(match){
-      const a = match.scoreA, b = match.scoreB;
-      const threshold = match.pointsToWin - 1;
-      return a >= threshold && b >= threshold;
-    }
-
-    // Server: every 2 points; deuce every 1; start server flips each game automatically
     function computeServer(match) {
+      // serve changes every 2 points; at deuce changes every 1
       const total = match.scoreA + match.scoreB;
-      const interval = isDeuce(match) ? 1 : 2;
+      const deuce = match.scoreA >= (match.pointsToWin - 1) && match.scoreB >= (match.pointsToWin - 1);
+      const interval = deuce ? 1 : 2;
+
+      const start = match.tossWinner; // 'A' or 'B' starts serve
       const flips = Math.floor(total / interval);
-      const start = match.gameStartServer || match.tossWinner || "A";
       return (flips % 2 === 0) ? start : (start === "A" ? "B" : "A");
-    }
-
-    function fmtDuration(sec){
-      sec = Math.max(0, Math.floor(sec||0));
-      const h = String(Math.floor(sec/3600)).padStart(2,"0");
-      const m = String(Math.floor((sec%3600)/60)).padStart(2,"0");
-      const s = String(sec%60).padStart(2,"0");
-      return `${h}:${m}:${s}`;
-    }
-
-    function renderTimeoutTimer(match){
-      const timer = $("timeoutTimer");
-      const fill = $("timerFill");
-      const ttext = $("timerText");
-
-      if (!match || !match.timeout || !match.timeout.active) {
-        timer.style.display = "none";
-        return;
-      }
-      const endsAt = match.timeout.active.endsAt;
-      const now = Date.now();
-      const remainMs = Math.max(0, endsAt - now);
-      const remain = Math.ceil(remainMs/1000);
-      ttext.textContent = String(remain);
-
-      timer.style.display = "";
-      const frac = Math.max(0, Math.min(1, remainMs / 60000));
-      fill.style.transform = `scaleX(${frac})`;
-
-      if (remainMs <= 0){
-        timer.style.display = "none";
-      }
     }
 
     function renderLive(match) {
@@ -1164,86 +917,35 @@
 
       $("liveNameA").textContent = match.nameA;
       $("liveNameB").textContent = match.nameB;
+      $("scoreA").textContent = match.scoreA;
+      $("scoreB").textContent = match.scoreB;
 
-      // Scores + animate changes
-      const a = match.scoreA, b = match.scoreB;
-      const scoreAEl = $("scoreA"), scoreBEl = $("scoreB");
-
-      if (state.lastScoreA !== null && state.lastScoreA !== a){
-        scoreAEl.classList.remove("pop"); void scoreAEl.offsetWidth; scoreAEl.classList.add("pop");
-      }
-      if (state.lastScoreB !== null && state.lastScoreB !== b){
-        scoreBEl.classList.remove("pop"); void scoreBEl.offsetWidth; scoreBEl.classList.add("pop");
-      }
-      state.lastScoreA = a; state.lastScoreB = b;
-
-      scoreAEl.textContent = a;
-      scoreBEl.textContent = b;
-
-      // match score shown below points
-      $("matchScoreA").textContent = `${match.setsA} - ${match.setsB}`;
-      $("matchScoreB").textContent = `${match.setsA} - ${match.setsB}`;
-
-      // timeout used tag
-      $("timeoutA").textContent = (match.timeout && match.timeout.usedA) ? "T" : "";
-      $("timeoutB").textContent = (match.timeout && match.timeout.usedB) ? "T" : "";
-
-      // Serve dot
       const srv = computeServer(match);
-      $("serveA").style.display = (srv === "A") ? "" : "none";
-      $("serveB").style.display = (srv === "B") ? "" : "none";
+      $("serveA").style.display = srv === "A" ? "" : "none";
+      $("serveB").style.display = srv === "B" ? "" : "none";
 
-      // Deuce + ADV
-      const banner = $("deuceBanner");
-      if (isDeuce(match) && match.scoreA === match.scoreB){
-        banner.classList.add("on");
-        banner.textContent = "DEUCE";
-      } else if (isDeuce(match) && Math.abs(match.scoreA - match.scoreB) === 1){
-        banner.classList.add("on");
-        const leader = match.scoreA > match.scoreB ? "A" : "B";
-        banner.textContent = (leader === "A") ? `ADV • ${match.nameA}` : `ADV • ${match.nameB}`;
-      } else {
-        banner.classList.remove("on");
-      }
-
-      // History
       const list = $("setList");
       list.innerHTML = "";
-      const sets = match.sets || [];
-      sets.forEach((s) => {
+      (match.sets || []).forEach((s) => {
         const el = document.createElement("div");
         el.className = "setItem";
         el.innerHTML = `
-          <div class="setLeft">
+          <span class="setTime">${fmtDur(s.durationMs || 0)}</span>
+          <span class="setScore">
             <span class="chipA">${s.a}</span>
-            <span class="pipe">|</span>
+            <span class="sep">:</span>
             <span class="chipB">${s.b}</span>
-          </div>
-          <div class="dur">(${fmtDuration(s.durationSec || 0)})</div>
+          </span>
         `;
         list.appendChild(el);
       });
-      if (!sets.length){
+
+      if (!match.sets || match.sets.length === 0) {
         const el = document.createElement("div");
         el.className = "setItem";
         el.style.opacity = ".65";
         el.textContent = "No games finished yet";
         list.appendChild(el);
-      }
-
-      // Timeout timer
-      renderTimeoutTimer(match);
-
-      // Game-won overlay (event)
-      if (match.lastEvent && match.lastEvent.type === "gameWon" && match.lastEvent.at && match.lastEvent.at > state.lastGameWonEventAt){
-        state.lastGameWonEventAt = match.lastEvent.at;
-        const overlay = $("winOverlay");
-        const title = $("winTitle");
-        const sub = $("winSub");
-        title.textContent = `Game Won — ${match.lastEvent.winnerName || "Player"}`;
-        sub.textContent = "Next game starting…";
-        overlay.classList.add("on");
-        setTimeout(() => overlay.classList.remove("on"), 2200);
       }
     }
 
@@ -1251,108 +953,45 @@
       $("finalSetsA").textContent = match.setsA;
       $("finalSetsB").textContent = match.setsB;
 
+      // Names above final scores (for download image too)
+      $("finalNameA").textContent = match.nameA || "Player A";
+      $("finalNameB").textContent = match.nameB || "Player B";
+
+      // Total match time
+      const totalMs = (match.totalDurationMs != null)
+        ? match.totalDurationMs
+        : (match.endedAt && match.startedAt ? (match.endedAt - match.startedAt) : 0);
+      $("totalTime").textContent = `Total time: ${fmtDur(totalMs)}`;
+
       const list = $("finalSetList");
       list.innerHTML = "";
-      const sets = match.sets || [];
-      sets.forEach((s) => {
+      (match.sets || []).forEach((s) => {
         const el = document.createElement("div");
         el.className = "setItem";
         el.innerHTML = `
-          <div class="setLeft">
+          <span class="setTime">${fmtDur(s.durationMs || 0)}</span>
+          <span class="setScore">
             <span class="chipA">${s.a}</span>
-            <span class="pipe">|</span>
+            <span class="sep">:</span>
             <span class="chipB">${s.b}</span>
-          </div>
-          <div class="dur">(${fmtDuration(s.durationSec || 0)})</div>
+          </span>
         `;
         list.appendChild(el);
       });
     }
 
     function canScoreThisMatch(match) {
-      return state.role === "scorer" && match && match.ownerUid && match.ownerUid === uid;
+      return state.role === "scorer" && match && match.ownerUid && uid && match.ownerUid === uid;
     }
 
     /*******
-     * Presence (watcher count)
-     *******/
-    function updatePresenceRole(){
-      if (!uid) return;
-      const myRef = presenceRef.child(uid);
-      myRef.update({
-        role: state.role,
-        lastSeen: firebase.database.ServerValue.TIMESTAMP
-      });
-    }
-
-    function startPresence(){
-      if (!uid) return;
-      const myRef = presenceRef.child(uid);
-      myRef.onDisconnect().remove();
-      updatePresenceRole();
-      setInterval(() => updatePresenceRole(), 12000);
-    }
-
-    presenceRef.on("value", (snap) => {
-      const obj = snap.val() || {};
-      let watchers = 0;
-      Object.values(obj).forEach(v => { if (v && v.role === "watch") watchers += 1; });
-      const base = ($("statusText").textContent || "Connected");
-      if (base.toLowerCase().includes("connected")){
-        $("statusText").textContent = `Connected • ${watchers} Watchers`;
-      }
-    });
-
-    /*******
-     * Chat
-     *******/
-    function fmtTime(ts){
-      try{
-        const d = new Date(ts);
-        const hh = d.getHours();
-        const mm = String(d.getMinutes()).padStart(2,"0");
-        return `${hh}:${mm}`;
-      }catch{ return ""; }
-    }
-    function renderChat(list){
-      const el = $("chatList");
-      el.innerHTML = "";
-      list.forEach(m => {
-        const row = document.createElement("div");
-        row.className = "chatMsg";
-        row.innerHTML = `<b>${m.name || "Guest"}</b>: ${m.text || ""}<small>${fmtTime(m.ts || Date.now())}</small>`;
-        el.appendChild(row);
-      });
-      el.scrollTop = el.scrollHeight;
-    }
-    chatRef.limitToLast(80).on("value", (snap) => {
-      const v = snap.val() || {};
-      const msgs = Object.values(v).sort((a,b) => (a.ts||0)-(b.ts||0));
-      renderChat(msgs);
-      $("chatStatus").textContent = `${msgs.length} msgs`;
-    });
-
-    function sendChat(){
-      const name = ( ($("chatName").value || localStorage.getItem("ttfl_chat_name") || "Guest") ).trim().slice(0,18) || "Guest";
-      const text = ($("chatText").value || "").trim();
-      if (!text) return;
-      localStorage.setItem("ttfl_chat_name", name);
-      $("chatName").value = name;
-      $("chatText").value = "";
-      const msg = { name, text, ts: Date.now(), uid: uid || null, role: state.role };
-      chatRef.push(msg).catch(() => toast("Chat failed"));
-    }
-    $("chatSend").addEventListener("click", sendChat);
-    $("chatText").addEventListener("keydown", (e) => { if (e.key === "Enter") sendChat(); });
-
-    /*******
-     * Subscribe room -> match
+     * 6) Subscribe room -> current match
      *******/
     function subscribeMatch(matchId) {
       if (!matchId) return;
-      if (matchOff) { matchOff(); matchOff = null; }
+      if (currentMatchUnsub) { currentMatchUnsub(); currentMatchUnsub = null; }
 
-      const matchRef = db.ref(`matches/${matchId}`);
+      const matchRef = ref(db, `matches/${matchId}`);
       const handler = (snap) => {
         const m = snap.val();
         if (!m) return;
@@ -1366,7 +1005,6 @@
           $("modeText").textContent = state.role;
           $("scorerControls").style.display = "none";
           toast("Another scorer owns this match.", "You are in watch mode.");
-          updatePresenceRole();
         }
 
         if (m.status === "ended") {
@@ -1380,50 +1018,74 @@
         $("scorerControls").style.display = canScoreThisMatch(m) ? "" : "none";
       };
 
-      matchRef.on("value", handler);
-      matchOff = () => matchRef.off("value", handler);
+      onValue(matchRef, handler);
+      currentMatchUnsub = () => off(matchRef, "value", handler);
     }
 
-    roomRef.on("value", (snap) => {
-      const room = snap.val();
+    function applyRoomSnapshot(room){
+      lastRoomSnapshot = room || null;
 
+      const roomState = (room && room.status) ? room.status : "idle";
+      const msg = (room && room.message) ? room.message : "";
+      setRoomStateBadge(roomState, msg);
+
+      // No current match -> watchers should see setup and the room state badge
       if (!room || !room.currentMatchId) {
         currentMatchId = null;
-        showView("setup");
+        if (state.role === "watch") {
+          showView("setup");
+        } else {
+          // scorer can stay on setup too
+          showView("setup");
+        }
         return;
       }
+
+      // Room has active match
       if (room.currentMatchId !== currentMatchId) {
         currentMatchId = room.currentMatchId;
         subscribeMatch(currentMatchId);
       }
-    });
+    }
+
+    onValue(roomRef, (snap) => applyRoomSnapshot(snap.val()));
 
     /*******
-     * Auth + connect
+     * 7) Auth + start
      *******/
     setStatus("Connecting...", "warn");
-    auth.onAuthStateChanged((user) => {
+
+    onAuthStateChanged(auth, (user) => {
       if (user) {
         uid = user.uid;
         setStatus("Connected", "ok");
-        startPresence();
       }
     });
 
-    auth.signInAnonymously().catch((e) => {
-      console.error(e);
+    try {
+      await signInAnonymously(auth);
+      setStatus("Connected", "ok");
+    } catch (e) {
       setStatus("Auth failed", "bad");
       toast("Auth failed", "Enable Anonymous Auth in Firebase.");
-    });
+      console.error(e);
+    }
 
     /*******
-     * Start match (scorer)
+     * 8) Start match (scorer)
      *******/
+    async function setRoomStatusPatch(patch){
+      try{
+        await update(roomRef, { ...patch, updatedAt: serverTimestamp() });
+      }catch(e){
+        console.error(e);
+      }
+    }
+
     $("startBtn").addEventListener("click", async () => {
       state.role = "scorer";
       $("roleBadge").textContent = state.role;
       $("modeText").textContent = state.role;
-      updatePresenceRole();
 
       const pin = ($("pin").value || "").trim();
       if (!pin) { toast("Enter scorer PIN"); return; }
@@ -1436,17 +1098,15 @@
 
       const matchId = `m_${Date.now()}_${Math.random().toString(16).slice(2,8)}`;
 
-      const now = Date.now();
       const match = {
         matchId,
         roomId,
         ownerUid: uid,
-        pinHash: btoa(pin).slice(0,16),
+        pinHash: btoa(pin).slice(0,16), // casual use only
         nameA, nameB,
         bestOf,
         pointsToWin,
         tossWinner,
-        gameStartServer: tossWinner, // starting server for current game
         scoreA: 0,
         scoreB: 0,
         sets: [],
@@ -1454,17 +1114,15 @@
         setsB: 0,
         gameIndex: 1,
         status: "live",
-        startedAt: now,
-        gameStartedAt: now,
-        timeout: { usedA:false, usedB:false, active:null },
-        lastEvent: null,
-        createdAt: now,
-        updatedAt: now
+        startedAt: Date.now(),
+        gameStartedAt: Date.now(),
+        createdAt: Date.now(),
+        updatedAt: Date.now()
       };
 
       try {
-        await db.ref(`matches/${matchId}`).set(match);
-        await roomRef.update({ currentMatchId: matchId, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+        await set(ref(db, `matches/${matchId}`), match);
+        await setRoomStatusPatch({ currentMatchId: matchId, status: "live", message: "Match is live" });
         state.undoStack = [];
         toast("Match started");
       } catch (e) {
@@ -1475,37 +1133,36 @@
     });
 
     /*******
-     * Scoring actions (owner only) + game auto reset + start server flips after each game
+     * 9) Scoring actions (owner only)
      *******/
+    async function updateMatchAtomic(fn) {
+      if (!currentMatchId) return;
+      const matchRef = ref(db, `matches/${currentMatchId}`);
+
+      try {
+        await runTransaction(matchRef, (cur) => {
+          if (!cur) return cur;
+          if (!uid || cur.ownerUid !== uid) return cur; // owner-only
+          const next = fn(clone(cur));
+          next.updatedAt = Date.now();
+          return next;
+        });
+      } catch (e) {
+        console.error(e);
+        toast("Update failed", "Permission or connectivity issue.");
+      }
+    }
+
     function pushUndo(snapshot) {
       state.undoStack.push(snapshot);
       if (state.undoStack.length > 25) state.undoStack.shift();
-    }
-
-    function updateMatchAtomic(fn){
-      const m = state.match;
-      if (!m || !currentMatchId) return Promise.resolve();
-
-      const matchRef = db.ref(`matches/${currentMatchId}`);
-      return matchRef.transaction((cur) => {
-        if (!cur) return cur;
-        if (cur.ownerUid !== uid) return cur;
-        const next = fn(JSON.parse(JSON.stringify(cur)));
-        next.updatedAt = Date.now();
-        return next;
-      });
-    }
-
-    function gameDurationSec(cur){
-      const now = Date.now();
-      return Math.max(0, Math.round((now - (cur.gameStartedAt || now)) / 1000));
     }
 
     async function addPoint(which) {
       const m = state.match;
       if (!canScoreThisMatch(m)) { toast("Not scorer for this match"); return; }
 
-      pushUndo({ ...m });
+      pushUndo(clone(m));
 
       await updateMatchAtomic((cur) => {
         if (cur.status !== "live") return cur;
@@ -1514,27 +1171,13 @@
         else cur.scoreB += 1;
 
         if (isGameWon(cur.scoreA, cur.scoreB, cur.pointsToWin)) {
-          // record finished game
           cur.sets = cur.sets || [];
-          cur.sets.push({ a: cur.scoreA, b: cur.scoreB, durationSec: gameDurationSec(cur) });
+          const dur = Date.now() - (cur.gameStartedAt || cur.startedAt || Date.now());
+          cur.sets.push({ a: cur.scoreA, b: cur.scoreB, durationMs: dur });
 
-          // sets won
-          let winner = "A";
           if (cur.scoreA > cur.scoreB) cur.setsA += 1;
-          else { cur.setsB += 1; winner = "B"; }
+          else cur.setsB += 1;
 
-          // game won event for overlay
-          cur.lastEvent = {
-            type: "gameWon",
-            winner,
-            winnerName: winner === "A" ? cur.nameA : cur.nameB,
-            at: Date.now()
-          };
-
-          // flip starting server for next game (alternate each game)
-          cur.gameStartServer = (cur.gameStartServer === "A") ? "B" : "A";
-
-          // reset points + timers for next game
           cur.scoreA = 0;
           cur.scoreB = 0;
           cur.gameIndex = (cur.sets.length + 1);
@@ -1543,14 +1186,18 @@
           const need = setsToWin(cur.bestOf);
           if (cur.setsA >= need || cur.setsB >= need) {
             cur.status = "ended";
+            cur.endedAt = Date.now();
+            cur.totalDurationMs = (cur.startedAt ? (cur.endedAt - cur.startedAt) : 0);
           }
         }
-
         return cur;
-      }).catch((e) => {
-        console.error(e);
-        toast("Update failed", "Permission or connectivity issue.");
       });
+
+      // If it ended, mark room ended too (watchers will see result via match subscription)
+      const m2 = state.match;
+      if (m2 && m2.status === "ended") {
+        await setRoomStatusPatch({ status: "ended", message: "Match ended" });
+      }
     }
 
     $("ptA").addEventListener("click", () => addPoint("A"));
@@ -1563,7 +1210,7 @@
       if (!prev) { toast("Nothing to undo"); return; }
 
       try {
-        await db.ref(`matches/${currentMatchId}`).set({ ...prev, updatedAt: Date.now() });
+        await set(ref(db, `matches/${currentMatchId}`), { ...prev, updatedAt: Date.now() });
         toast("Undone");
       } catch (e) {
         console.error(e);
@@ -1575,49 +1222,14 @@
       const m = state.match;
       if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
 
-      pushUndo({ ...m });
+      pushUndo(clone(m));
 
       await updateMatchAtomic((cur) => {
-        cur.gameStartServer = (cur.gameStartServer === "A") ? "B" : "A";
+        cur.tossWinner = (cur.tossWinner === "A") ? "B" : "A";
         return cur;
       });
       toast("Serve swapped");
     });
-
-    // Timeout buttons (1 per player per match) + 60s timer visible for everyone
-    function startTimeout(by){
-      const m = state.match;
-      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
-
-      updateMatchAtomic((cur) => {
-        cur.timeout = cur.timeout || { usedA:false, usedB:false, active:null };
-        if (cur.timeout.active) return cur; // already running
-        if (by === "A" && cur.timeout.usedA) return cur;
-        if (by === "B" && cur.timeout.usedB) return cur;
-
-        if (by === "A") cur.timeout.usedA = true;
-        else cur.timeout.usedB = true;
-
-        cur.timeout.active = { by, startedAt: Date.now(), endsAt: Date.now() + 60000 };
-        return cur;
-      }).then(() => toast("Timeout started"));
-    }
-
-    $("timeoutABtn").addEventListener("click", () => startTimeout("A"));
-    $("timeoutBBtn").addEventListener("click", () => startTimeout("B"));
-
-    // Auto-expire timeout (scorer cleans up so watchers sync)
-    setInterval(() => {
-      const m = state.match;
-      if (!m || !m.timeout || !m.timeout.active) return;
-      if (!canScoreThisMatch(m)) return;
-      if (Date.now() >= m.timeout.active.endsAt){
-        updateMatchAtomic((cur) => {
-          if (cur.timeout) cur.timeout.active = null;
-          return cur;
-        });
-      }
-    }, 900);
 
     $("endMatchBtn").addEventListener("click", async () => {
       const m = state.match;
@@ -1625,39 +1237,86 @@
 
       await updateMatchAtomic((cur) => {
         cur.status = "ended";
+        cur.endedAt = Date.now();
+        cur.totalDurationMs = (cur.startedAt ? (cur.endedAt - cur.startedAt) : 0);
         return cur;
       });
+      await setRoomStatusPatch({ status: "ended", message: "Match ended" });
       toast("Match ended");
     });
 
-    $("newMatchBtn").addEventListener("click", () => {
-      showView("setup");
-      toast("Ready for new match");
+    // Cancel: removes currentMatchId so watchers go back to setup and see "cancelled"
+    $("cancelMatchBtn").addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+
+      try{
+        await setRoomStatusPatch({ currentMatchId: null, status: "cancelled", message: "Match cancelled", lastMatchId: currentMatchId || null });
+        toast("Cancelled", "Watchers will see cancellation.");
+        showView("setup");
+      }catch(e){
+        console.error(e);
+        toast("Cancel failed");
+      }
     });
 
-    $("resultNewMatchBtn").addEventListener("click", () => {
+    // Restart: keep same matchId but reset scores/sets to zero and room becomes live
+    $("restartMatchBtn").addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+
+      pushUndo(clone(m));
+
+      await updateMatchAtomic((cur) => {
+        cur.scoreA = 0;
+        cur.scoreB = 0;
+        cur.sets = [];
+        cur.setsA = 0;
+        cur.setsB = 0;
+        cur.gameIndex = 1;
+        cur.status = "live";
+        return cur;
+      });
+
+      await setRoomStatusPatch({ status: "live", message: "Match restarted", currentMatchId: currentMatchId });
+      toast("Restarted", "Scores reset to 0–0.");
+    });
+
+    // New match: goes to setup but does not change room until Start is pressed
+    $("newMatchBtn").addEventListener("click", async () => {
+      showView("setup");
+      toast("Ready for new match");
+      // Optional: show scheduled state so watchers know match is being prepared
+      if (state.role === "scorer") {
+        await setRoomStatusPatch({ currentMatchId: null, status: "scheduled", message: "Scorer is setting up a match" });
+      }
+    });
+
+    $("resultNewMatchBtn").addEventListener("click", async () => {
       showView("setup");
       toast("Start a new match");
+      if (state.role === "scorer") {
+        await setRoomStatusPatch({ currentMatchId: null, status: "scheduled", message: "Scorer is setting up a match" });
+      }
     });
-    $("backToLiveBtn").addEventListener("click", () => {
-      if (state.match && state.match.status !== "ended") showView("live");
-      else showView("setup");
+
+    $("backToSetupBtn").addEventListener("click", () => {
+      showView("setup");
     });
 
     /*******
-     * Download Scorecard (includes names above final scores already in UI)
+     * 10) Download Scorecard (PNG)
      *******/
     async function downloadScorecard() {
       const panel = $("mainPanel");
       toast("Preparing download...");
       try {
-        const canvas = window.html2canvas(panel, {
+        const canvas = await window.html2canvas(panel, {
           backgroundColor: null,
           scale: 2,
           useCORS: true
         });
-        const c = await canvas;
-        const dataUrl = c.toDataURL("image/png");
+        const dataUrl = canvas.toDataURL("image/png");
 
         const a = document.createElement("a");
         const ts = new Date().toISOString().replace(/[:.]/g,"-");
@@ -1676,26 +1335,20 @@
     $("downloadBtn").addEventListener("click", downloadScorecard);
 
     /*******
-     * Initial screen behavior
+     * 11) Initial view
      *******/
     if (state.role === "watch") {
-      showView("live");
+      showView("setup"); // will auto move to live when room has currentMatchId
     } else {
       showView("setup");
     }
 
-    // Landscape: hide right panel for clean scoring view
-    function applyLandscape(){
-      const isLand = window.matchMedia("(orientation: landscape)").matches;
-      const rightPanel = document.querySelector(".grid > .panel:last-child");
-      if (rightPanel){
-        rightPanel.style.display = isLand ? "none" : "";
-      }
+    // If config placeholders not replaced, warn clearly
+    if ((firebaseConfig.apiKey || "").includes("PASTE_")) {
+      setStatus("Config missing", "bad");
+      toast("Firebase config not pasted", "Paste firebaseConfig (including databaseURL).");
     }
-    window.addEventListener("resize", applyLandscape);
-    applyLandscape();
 
-  })();
   </script>
 </body>
 </html>
