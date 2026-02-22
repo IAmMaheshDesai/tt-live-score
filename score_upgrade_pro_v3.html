@@ -1,0 +1,1967 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>TTFL — Live Score Card</title>
+
+  <!-- iPhone "Add to Home Screen" nice behavior -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#0b0f14" />
+
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --card:rgba(255,255,255,.06);
+      --card2:rgba(255,255,255,.08);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.65);
+      --line:rgba(255,255,255,.10);
+      --blue:#1f63ff;
+      --orange:#ff9a3c;
+      --blueDark:#0b2f63;
+      --blueDark2:#082244;
+      --orangeDark:#5a2f00;
+      --orangeDark2:#3d2100;
+      --historyOrange:#ff9a3c;
+      /* Darker score tiles (match watch-style look) */
+      --blueDark:#0c2a55;
+      --orangeDark:#5a3a12;
+      --good:#41d38a;
+      --bad:#ff5d5d;
+      --shadow: 0 24px 60px rgba(0,0,0,.45);
+      --radius: 22px;
+      --pad: 18px;
+      --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    html,body{height:100%;}
+    body{
+      margin:0;
+      font-family: var(--font);
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(47,123,255,.22), transparent 55%),
+                  radial-gradient(1000px 600px at 90% 10%, rgba(255,154,60,.18), transparent 60%),
+                  linear-gradient(180deg, #0b0f14 0%, #070a0f 100%);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    .wrap{
+      max-width: 980px;
+      margin: 0 auto;
+      padding: max(14px, env(safe-area-inset-top)) 14px max(14px, env(safe-area-inset-bottom));
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 10px 10px 14px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      font-weight: 650;
+      letter-spacing:.2px;
+      font-size: 13px;
+      color: var(--muted);
+    
+    }
+    .dot{
+      width:10px;height:10px;border-radius:99px;background:rgba(255,255,255,.35);
+      box-shadow: 0 0 0 4px rgba(255,255,255,.06);
+    }
+    .pill{
+      display:flex; align-items:center; gap:8px;
+      padding: 8px 12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      border-radius: 999px;
+      font-size: 13px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .pill b{color:var(--text); font-weight:700;}
+    .statusDot{
+      width:8px;height:8px;border-radius:99px;background:rgba(255,255,255,.35);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 14px;
+    }
+
+    @media (min-width: 900px){
+      .grid{grid-template-columns: 1.2fr .8fr;}
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.04));
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .panelHeader{
+      padding: 14px var(--pad);
+      border-bottom: 1px solid var(--line);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+    }
+    .panelHeader h2{
+      margin:0; font-size: 18px; letter-spacing:.2px;
+    }
+    .panelHeader .sub{
+      margin:0; margin-top:4px; font-size: 13px; color: var(--muted);
+    }
+    .panelBody{ padding: var(--pad); }
+
+    .hint{
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      padding: 12px 14px;
+      background: rgba(255,255,255,.04);
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius: 16px;
+    }
+    .hint strong{ color: var(--text); }
+    .hint .stateLine{ display:flex; gap:8px; align-items:center; margin-top:10px; }
+    .stateBadge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      font-weight: 800;
+      color: var(--text);
+      font-size: 12px;
+      letter-spacing:.2px;
+    }
+    .stateBadge .miniDot{ width:7px; height:7px; border-radius:99px; background: rgba(255,255,255,.35); }
+    .stateBadge.live .miniDot{ background: var(--good); }
+    .stateBadge.cancelled .miniDot{ background: var(--bad); }
+    .stateBadge.scheduled .miniDot{ background: rgba(255,255,255,.55); }
+    .stateBadge.idle .miniDot{ background: rgba(255,255,255,.35); }
+
+    .form{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .field label{
+      display:block;
+      font-size: 12px;
+      color: var(--muted);
+      margin: 0 0 8px 2px;
+      letter-spacing:.2px;
+    }
+    input, select{
+      width:100%;
+      box-sizing:border-box;
+      padding: 14px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      outline:none;
+      font-size: 16px; /* iOS zoom prevention */
+    }
+    input::placeholder{color: rgba(255,255,255,.35);}
+    select{appearance:none;}
+    .field.full{grid-column: 1 / -1;}
+
+    .btnRow{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .btn{
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      border-radius: 22px;
+      padding: 16px 14px;
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing:.2px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn.primary{
+      background: linear-gradient(180deg, rgba(47,123,255,.35), rgba(47,123,255,.18));
+      border-color: rgba(47,123,255,.45);
+    }
+    .btn.secondary{
+      background: rgba(255,255,255,.05);
+    }
+    .btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+    }
+    .smallNote{
+      margin-top: 10px;
+      font-size: 12.5px;
+      color: var(--muted);
+      text-align:center;
+    }
+
+    /* Score board */
+    .scoreTop{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      margin-bottom: 10px;
+    }
+    .matchTitle{
+      font-weight:800;
+      font-size: 16px;
+      letter-spacing:.2px;
+      margin:0;
+    }
+    .matchMeta{
+      font-size: 12.5px;
+      color: var(--muted);
+      margin: 2px 0 0 0;
+    }
+
+    .scoreGrid{
+      display:grid;
+      grid-template-columns: 1fr 34px 1fr;
+      align-items:center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .scoreCard{
+      border-radius: 24px;
+      padding: 18px 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      position:relative;
+      overflow:hidden;
+    }
+    /* Dark blue / dark orange tiles with subtle depth */
+    .scoreCard.blue{
+      background: #0C2A55;        /* solid dark blue */
+      border: 2px solid #1f63ff;
+      box-shadow: 0 18px 40px rgba(0,0,0,.45);
+    }
+    .scoreCard.orange{
+      background: #5A2F00;        /* solid dark orange */
+      border: 2px solid #ff9a3c;
+      box-shadow: 0 18px 40px rgba(0,0,0,.45);
+    }
+
+    .nameRow{
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom: 10px;
+    }
+    .pname{ font-weight:900; font-size: 16px; margin:0; }
+    .serve{
+      width:10px;height:10px;border-radius:99px;
+      background: rgba(0, 190, 120, .95);
+      box-shadow: 0 0 10px rgba(0, 255, 160, .65), 0 0 18px rgba(0, 255, 160, .35);
+      border: 1px solid rgba(0,0,0,.35);
+    
+    }
+    .bigScore{
+      font-size: 72px;
+      font-weight: 950;
+      line-height: 1;
+      text-align:center;
+      margin: 2px 0 0;
+      letter-spacing: 1px;
+      color: #ffffff;   /* pure white */
+    }
+
+    .midIcon{
+      display:flex; align-items:center; justify-content:center;
+      color: rgba(255,255,255,.65);
+      font-weight:800;
+    }
+
+    .setsRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .setsCol{
+      flex:1;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      padding: 12px;
+      min-height: 84px;
+    }
+    .setsLabel{
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing:.2px;
+      margin: 0 0 10px 0;
+      text-transform: uppercase;
+    }
+
+    .setList{
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      align-items:center; /* centered */
+      justify-content:flex-start;
+    }
+    .setItem{
+      width: 100%;
+      max-width: 420px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.10);
+      font-weight: 900;
+      letter-spacing:.4px;
+    
+    }
+    .chipA{color: var(--historyOrange);}
+    .chipB{color: var(--historyOrange);}
+    .sep{color: var(--historyOrange);}
+
+    .controls{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .cbtn{
+      padding: 14px 12px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      font-weight: 900;
+      font-size: 16px;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .cbtn.blue{ border-color: rgba(47,123,255,.45); background: rgba(47,123,255,.18); }
+    .cbtn.orange{ border-color: rgba(255,154,60,.45); background: rgba(255,154,60,.15); }
+    .cbtn.warn{ border-color: rgba(255,93,93,.45); background: rgba(255,93,93,.12); }
+    .cbtn.good{ border-color: rgba(65,211,138,.45); background: rgba(65,211,138,.12); }
+    .cbtn.neutral{ border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.06); }
+
+    .footerNote{
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align:center;
+    }
+
+    /* Overlay message */
+    .toast{
+      position: fixed;
+      left: 12px; right: 12px;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 50px rgba(0,0,0,.45);
+      color: var(--text);
+      font-weight: 700;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all .22s ease;
+      pointer-events:none;
+      z-index: 999;
+    }
+    .toast.show{opacity:1; transform: translateY(0);}
+    .toast small{display:block; font-weight:600; color: var(--muted); margin-top: 4px;}
+
+    /* "Done" result layout */
+    .resultTitle{
+      text-align:center;
+      font-weight: 950;
+      font-size: 26px;
+      margin: 6px 0 2px;
+      letter-spacing:.4px;
+    }
+    .resultScore{
+      display:flex; align-items:center; justify-content:center;
+      gap: 10px;
+      margin: 10px 0 10px;
+      font-weight: 950;
+      font-size: 52px;
+      letter-spacing: 1px;
+    }
+    .badge{
+      padding: 10px 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      min-width: 92px;
+      text-align:center;
+    }
+    .badge.blue{
+      background: #0C2A55;
+      border-color: rgba(31,99,255,.55);
+      color:#ffffff;
+    }
+    .badge.orange{
+      background: #5A2F00;
+      border-color: rgba(255,154,60,.55);
+      color:#ffffff;
+    }
+    .doneTop{
+      display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    @media (max-width: 420px){
+      .brand{font-size: 18px;}
+      .bigScore{font-size: 58px;}
+      .btn{font-size: 17px;}
+    }
+
+    /* iPhone landscape: make scores easier to read from far */
+    @media (orientation: landscape) and (max-height: 520px){
+      .wrap{padding-top: max(10px, env(safe-area-inset-top)); padding-bottom: max(10px, env(safe-area-inset-bottom));}
+      .topbar{padding-bottom: 10px;}
+      .bigScore{font-size: 110px;}
+      .scoreCard{padding: 26px 18px; border-radius: 30px;}
+      .matchTitle{font-size: 18px;}
+      .resultScore{font-size: 70px;}
+      .badge{min-width: 120px; padding: 14px 18px; border-radius: 22px;}
+      .resultTitle{font-size: 30px;}
+    }
+  
+    /* Set timing + result name */
+    .setTime{min-width:92px;text-align:right;color:var(--historyOrange);opacity:.98;}
+    .setScore{display:flex;align-items:center;justify-content:flex-start;gap:10px;color:var(--historyOrange);}
+
+    .resultSide{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 8px;
+    }
+    .resultName{
+      font-size: 13px;
+      font-weight: 900;
+      color: rgba(255,255,255,.78);
+      letter-spacing:.3px;
+      text-transform: uppercase;
+      max-width: 130px;
+      text-align:center;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .totalTime{
+      text-align:center;
+      color: rgba(255,255,255,.72);
+      font-weight: 900;
+      letter-spacing:.3px;
+      margin-top: 6px;
+      font-size: 13px;
+    }
+
+    /* Optional: landscape on iPhone - prioritize score + controls */
+    @media (orientation: landscape) and (max-height: 520px){
+      .grid{grid-template-columns: 1fr;}
+      .grid > .panel:last-child{display:none;}
+      .bigScore{font-size: 56px;}
+      .controls{grid-template-columns: 1fr 1fr 1fr;}
+    }
+
+  
+    /* Enhancements (no layout redesign) */
+    .brand{font-size:13px;font-weight:600;color:rgba(255,255,255,.75);} /* Typography adjustment */
+
+    .serveDot{
+      width:12px;height:12px;border-radius:999px;
+      background:#0b5e3c;
+      box-shadow: 0 0 8px #00ff9d, 0 0 16px rgba(0,255,157,.70);
+      display:inline-block;
+      margin-left:8px;
+    }
+
+    .matchScore{
+      margin-top: 8px;
+      font-size: 18px;
+      font-weight: 900;
+      color: rgba(255,255,255,.78);
+      text-align:center;
+      letter-spacing:.4px;
+    }
+
+    .timeoutTag{
+      margin-top: 6px;
+      font-size: 12px;
+      font-weight: 900;
+      color: rgba(255,255,255,.72);
+      text-align:center;
+      letter-spacing:.6px;
+      text-transform: uppercase;
+    }
+
+    .timerBar{
+      position: fixed;
+      top: max(10px, env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      padding: 10px 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 20px 50px rgba(0,0,0,.45);
+      color: rgba(255,255,255,.92);
+      font-weight: 900;
+      display:none;
+      min-width: 210px;
+      text-align:center;
+    }
+    .timerBar .bar{
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.18);
+      overflow:hidden;
+      margin-top: 8px;
+    }
+    .timerBar .bar > i{
+      display:block;
+      height: 100%;
+      width: 100%;
+      background: rgba(255,154,60,.85);
+      transform-origin:left center;
+      transform: scaleX(1);
+    }
+
+    /* history row: score | score ..... (duration) right */
+    .setItem{
+      max-width: 520px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 10px 12px;
+    }
+    .setLeft{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      min-width: 120px;
+      font-weight: 950;
+    }
+    .pipe{
+      opacity:.7;
+      font-weight: 950;
+      color: rgba(255,255,255,.55);
+    }
+    .dur{
+      margin-left:auto;
+      font-size: 12.5px;
+      font-weight: 900;
+      color: rgba(255,154,60,.90);
+      letter-spacing:.4px;
+      white-space:nowrap;
+    }
+
+    /* Chat (bottom panel) */
+    .chatWrap{
+      margin-top: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      overflow:hidden;
+    }
+    .chatHdr{
+      display:flex;align-items:center;justify-content:space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      font-weight: 900;
+      color: rgba(255,255,255,.85);
+      font-size: 13px;
+      letter-spacing:.3px;
+    }
+    .chatList{
+      max-height: 180px;
+      overflow:auto;
+      padding: 10px 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      scroll-behavior:smooth;
+    }
+    .chatMsg{
+      font-size: 13px;
+      line-height: 1.25;
+      color: rgba(255,255,255,.86);
+      word-break: break-word;
+    }
+    .chatMsg b{color: rgba(255,255,255,.92);}
+    .chatMsg small{display:block;color: rgba(255,255,255,.55);font-weight:700;margin-top:3px;}
+    .chatInput{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 10px 12px 12px;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+    .chatRow{
+      display:grid;
+      grid-template-columns: 120px 1fr 92px;
+      gap: 10px;
+      align-items:center;
+    }
+    .chatRow input{
+      border-radius: 14px;
+      padding: 12px 12px;
+      font-size: 14px;
+    }
+    .chatRow button{
+      border-radius: 14px;
+      padding: 12px 10px;
+      font-size: 14px;
+      font-weight: 900;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.08);
+      color: rgba(255,255,255,.92);
+      cursor:pointer;
+    }
+
+    /* Score animations */
+    @keyframes pulsePop{
+      0%{transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,255,255,0));}
+      35%{transform: scale(1.06); filter: drop-shadow(0 10px 16px rgba(0,0,0,.35));}
+      100%{transform: scale(1); filter: drop-shadow(0 0 0 rgba(255,255,255,0));}
+    }
+    .bigScore.pop{animation: pulsePop .22s ease-out;}
+
+    /* Deuce banner + ADV */
+    .banner{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.28);
+      color: rgba(255,255,255,.92);
+      font-weight: 950;
+      text-align:center;
+      display:none;
+    }
+    .banner.on{
+      display:block;
+      box-shadow: 0 0 26px rgba(255,154,60,.22);
+      border-color: rgba(255,154,60,.35);
+    }
+    .adv{
+      display:inline-block;
+      margin-left: 8px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 950;
+      letter-spacing:.7px;
+      background: rgba(255,154,60,.18);
+      border: 1px solid rgba(255,154,60,.35);
+      color: rgba(255,154,60,.95);
+      vertical-align: middle;
+    }
+
+    /* Game won overlay */
+    .winOverlay{
+      position: fixed;
+      inset: 0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 1200;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(6px);
+    }
+    .winOverlay.on{display:flex;}
+    .winCard{
+      width: min(420px, calc(100% - 24px));
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(10,12,16,.92);
+      padding: 18px 16px;
+      text-align:center;
+      box-shadow: 0 30px 70px rgba(0,0,0,.55);
+    }
+    .winCard h3{
+      margin: 0;
+      font-size: 22px;
+      font-weight: 950;
+      letter-spacing:.3px;
+    }
+    .winCard p{
+      margin: 8px 0 0;
+      color: rgba(255,255,255,.72);
+      font-weight: 800;
+    }
+
+  
+    .matchScoreRow{margin-top:10px; text-align:center; font-size:13px; color: var(--muted);} 
+
+    .timeoutBanner{position:fixed; top:max(10px, env(safe-area-inset-top)); left:50%; transform:translateX(-50%); padding:10px 14px; border-radius:999px; border:1px solid rgba(255,255,255,.14); background: rgba(0,0,0,.55); backdrop-filter: blur(10px); box-shadow: 0 18px 50px rgba(0,0,0,.45); color: rgba(255,255,255,.92); font-weight: 900; z-index: 1000;} 
+    .timeoutBanner.pulse{animation: tPulse .9s ease-in-out infinite;} 
+    @keyframes tPulse{0%,100%{transform:translateX(-50%) scale(1);}50%{transform:translateX(-50%) scale(1.03);}} 
+
+    .bigScore.pop{animation: scorePop .22s ease-out;} 
+    @keyframes scorePop{0%{transform:scale(1);}50%{transform:scale(1.12);}100%{transform:scale(1);}} 
+
+    .deuceBanner{margin-top:10px; text-align:center; font-weight:950; letter-spacing:.6px; padding:10px 12px; border-radius:16px; border:1px solid rgba(0,255,160,.25); background: rgba(0,255,160,.08); color: rgba(255,255,255,.92); box-shadow: 0 0 18px rgba(0,255,160,.18);} 
+
+    .centerOverlay{position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:1200; pointer-events:none;} 
+    .centerOverlay .box{padding:16px 18px; border-radius:18px; border:1px solid rgba(255,255,255,.16); background: rgba(0,0,0,.62); backdrop-filter: blur(10px); color: rgba(255,255,255,.95); font-weight: 950; font-size: 18px; box-shadow: 0 28px 70px rgba(0,0,0,.55);} 
+    .centerOverlay.show{display:flex;} 
+
+    .histScores{display:flex; align-items:center; gap:10px; font-size:16px;}
+    .histA{min-width:28px; text-align:right; color: #ffffff;}
+    .histBar{opacity:.75; color: rgba(255,255,255,.7);}
+    .histB{min-width:28px; text-align:left; color: #ffffff;}
+    .histTime{margin-left:auto; font-size:13px; font-weight:800; color: var(--orange);}
+    </style>
+</head>
+
+<body>
+  <div class="timerBar" id="timeoutTimer">Timeout • <span id="timerText">60</span>s<div class="bar"><i id="timerFill"></i></div></div>
+  <div class="winOverlay" id="winOverlay"><div class="winCard"><h3 id="winTitle">Game Won</h3><p id="winSub">Next game starting…</p></div></div>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <span class="dot"></span>
+        <span>Table Tennis For Life — Live Score Card</span>
+      </div>
+      <div class="pill" id="statusPill"><span class="statusDot" id="statusDot"></span><span id="statusText">Starting...</span></div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: main -->
+      <div class="panel" id="mainPanel">
+        <div class="panelHeader">
+          <div>
+            <h2 id="leftTitle">Setup</h2>
+            <p class="sub" id="leftSub">Name players, choose who starts, then Start match</p>
+          </div>
+          <div class="pill"><span>Role:</span> <b id="roleBadge">...</b></div>
+        </div>
+
+        <div class="panelBody" id="leftBody">
+          <!-- Setup view -->
+          <div id="setupView">
+            <div class="hint">
+              This page is designed for iPhone scoring + live watching. Share the <strong>same room URL</strong> with watchers.
+              <div class="stateLine">
+                <span class="stateBadge idle" id="roomStateBadge"><span class="miniDot"></span><span id="roomStateText">Room: idle</span></span>
+                <span style="color:var(--muted);font-size:12px;" id="roomStateMsg"></span>
+              </div>
+              <div style="margin-top:10px;">
+                <strong>Tip:</strong> Use different rooms for parallel matches, like <code>?room=table1</code> and <code>?room=table2</code>.
+              </div>
+            </div>
+
+            <div class="form">
+              <div class="field">
+                <label>First player (Blue)</label>
+                <input id="nameA" placeholder="First player" maxlength="22" />
+              </div>
+              <div class="field">
+                <label>Second player (Orange)</label>
+                <input id="nameB" placeholder="Second player" maxlength="22" />
+              </div>
+
+              <div class="field">
+                <label>Who starts? (Toss winner)</label>
+                <select id="tossWinner">
+                  <option value="A">First player</option>
+                  <option value="B">Second player</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Best of</label>
+                <select id="bestOf">
+                  <option value="5" selected>5</option>
+                  <option value="7">7</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Points to win</label>
+                <input id="pointsToWin" type="number" min="1" max="99" value="11" />
+              </div>
+              <div class="field">
+                <label>Scorer PIN (only scorer needs)</label>
+                <input id="pin" type="password" inputmode="numeric" maxlength="8" placeholder="••••" />
+              </div>
+
+              <div class="field full btnRow">
+                <button class="btn primary" id="startBtn">▶ Start match</button>
+                <button class="btn secondary" id="watchBtn">👁 Watch live</button>
+              </div>
+            </div>
+
+            <div class="smallNote">Watchers do not need a PIN. Only the scorer can start and update the match.</div>
+          </div>
+
+          <!-- Live view -->
+          <div id="liveView" style="display:none;">
+            <div class="scoreTop">
+              <div>
+                <p class="matchTitle" id="matchTitle">Live</p>
+                <p class="matchMeta" id="matchMeta">Game 1 • Best of 5</p>
+              </div>
+              <div class="pill" id="roomPill"><span>Room:</span> <b id="roomText"></b></div>
+            </div>
+
+            <div class="scoreGrid" id="scoreArea">
+              <div class="scoreCard blue">
+                <div class="nameRow">
+                  <p class="pname" id="liveNameA">Player A</p>
+                  <span class="serve" id="serveA" style="display:none;" aria-label="Server"></span>
+                </div>
+                <div class="matchTag" id="timeoutUsedA" style="font-size:12px;color:var(--muted);font-weight:800;margin-top:-6px;">
+                  <span id="timeoutA" style="display:none;">Timeout Used</span>
+                </div>
+                <div class="bigScore" id="scoreA">0</div><div class="matchScore" id="matchScoreA">0 - 0</div><div class="timeoutTag" id="timeoutA"></div>
+              </div>
+
+              <div class="midIcon">↺</div>
+
+              <div class="scoreCard orange">
+                <div class="nameRow">
+                  <p class="pname" id="liveNameB">Player B</p>
+                  <span class="serve" id="serveB" style="display:none;" aria-label="Server"></span>
+                </div>
+                <div class="matchTag" id="timeoutUsedB" style="font-size:12px;color:var(--muted);font-weight:800;margin-top:-6px;">
+                  <span id="timeoutB" style="display:none;">Timeout Used</span>
+                </div>
+                <div class="bigScore" id="scoreB">0</div><div class="matchScore" id="matchScoreB">0 - 0</div><div class="timeoutTag" id="timeoutB"></div>
+              </div>
+            </div>
+            <div class="banner" id="deuceBanner">DEUCE</div>
+
+            <div class="matchScoreRow"><span id="matchScoreText">0 – 0</span></div>
+            <div class="deuceBanner" id="deuceBanner" style="display:none;">DEUCE</div>
+
+            <div class="setsRow">
+              <div class="setsCol">
+                <div class="setsLabel">Games (history)</div>
+                <div class="setList" id="setList"></div>
+              </div>
+            </div>
+
+            <div class="controls" id="scorerControls" style="display:none;">
+              <button class="cbtn blue" id="ptA">+1 (Blue)</button>
+              <button class="cbtn orange" id="ptB">+1 (Orange)</button>
+              <button class="cbtn" id="timeoutBtnA">Timeout (Blue)</button>
+              <button class="cbtn" id="timeoutBtnB">Timeout (Orange)</button>
+              <button class="cbtn neutral" id="undoBtn">Undo</button>
+              <button class="cbtn neutral" id="swapServeBtn">Swap Serve</button>
+              <button class="cbtn warn" id="cancelMatchBtn">Cancel</button>
+              <button class="cbtn warn" id="endMatchBtn">End Match</button>
+              <button class="cbtn good" id="restartMatchBtn">Restart</button>
+              <button class="cbtn good" id="newMatchBtn">New Match</button>
+            </div>
+
+            
+            <div class="chatWrap" id="chatWrap">
+              <div class="chatHdr">
+                <span>Live Chat</span>
+                <span style="color:rgba(255,255,255,.55);font-weight:800;" id="chatStatus">—</span>
+              </div>
+              <div class="chatList" id="chatList"></div>
+              <div class="chatInput">
+                <div class="chatRow">
+                  <input id="chatName" placeholder="Name" maxlength="18" />
+                  <input id="chatText" placeholder="Type a message…" maxlength="200" />
+                  <button id="chatSend">Send</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="footerNote" id="liveFooter">TTFL Live • Single scorer • Unlimited watchers</div>
+          </div>
+
+          <!-- Result view -->
+          <div id="resultView" style="display:none;">
+            <div class="doneTop">
+              <span>Done</span>
+              <button class="cbtn good" id="downloadBtn" style="max-width:220px;">Download Scorecard</button>
+            </div>
+            <div class="resultTitle">Result</div>
+            <div class="resultScore">
+              <div class="resultSide">
+                <div class="resultName" id="finalNameA">Player A</div>
+                <div class="badge blue" id="finalSetsA">0</div>
+              </div>
+              <div style="opacity:.7;">:</div>
+              <div class="resultSide">
+                <div class="resultName" id="finalNameB">Player B</div>
+                <div class="badge orange" id="finalSetsB">0</div>
+              </div>
+            </div>
+            <div class="totalTime" id="totalTime">Total time: 00:00:00</div>
+
+            <div class="setsRow">
+              <div class="setsCol">
+                <div class="setsLabel">Sets</div>
+                <div class="setList" id="finalSetList"></div>
+              </div>
+            </div>
+
+            <div class="controls" id="resultControls">
+              <button class="cbtn good" id="resultNewMatchBtn">Start New Match</button>
+              <button class="cbtn neutral" id="backToSetupBtn">Back to Setup</button>
+            </div>
+
+            <div class="footerNote">Tip: Add this page to Home Screen for quick scoring tomorrow.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: connection -->
+      <div class="panel">
+        <div class="panelHeader">
+          <div>
+            <h2>Connection</h2>
+            <p class="sub">Saved in this browser</p>
+          </div>
+          <div class="pill"><span>Mode:</span> <b id="modeText">...</b></div>
+        </div>
+        <div class="panelBody">
+          <div class="hint" style="margin-bottom:12px;">
+            <strong>Scorer link</strong> owns the room. If a second scorer opens the same room, they will be forced into watch mode.
+            <br><br>
+            Use different rooms for parallel matches: <code>room=table1</code>, <code>room=table2</code>, etc.
+          </div>
+
+          <div class="form" style="grid-template-columns:1fr;">
+            <div class="field">
+              <label>Room</label>
+              <input id="roomInput" placeholder="table1" />
+            </div>
+            <div class="field">
+              <label>Share (watch)</label>
+              <input id="shareWatch" readonly />
+            </div>
+            <div class="field">
+              <label>Share (scorer)</label>
+              <input id="shareScorer" readonly />
+            </div>
+            <div class="btnRow" style="grid-template-columns:1fr;">
+              <button class="btn secondary" id="copyWatch">Copy Watch Link</button>
+              <button class="btn secondary" id="copyScorer">Copy Scorer Link</button>
+            </div>
+          </div>
+
+          <div class="smallNote" id="connNote">If you see “Permission denied”, fix Rules and Anonymous Auth.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="timeoutBanner pulse" id="timeoutBanner" style="display:none;">Timeout • <span id="timeoutClock">01:00</span></div>
+  <div class="centerOverlay" id="centerOverlay"><div class="box" id="overlayText">Game Won</div></div>
+  <div class="toast" id="toast"></div>
+
+  <!-- html2canvas for download -->
+  
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+  <script>
+  (function(){
+
+    /*******
+     * URL + params
+     *******/
+    const pageUrl = new window.URL(window.location.href);
+    const qp = pageUrl.searchParams;
+
+    const roleParam = (qp.get("role") || "watch").toLowerCase(); // watch | scorer
+    const roomParam = (qp.get("room") || localStorage.getItem("ttfl_room") || "table1").trim();
+
+    const $ = (id) => document.getElementById(id);
+    const toastEl = $("toast");
+
+    function toast(msg, sub="") {
+      toastEl.innerHTML = `${msg}${sub ? `<small>${sub}</small>` : ""}`;
+      toastEl.classList.add("show");
+      setTimeout(() => toastEl.classList.remove("show"), 2600);
+    }
+
+    function setStatus(text, kind="idle") {
+      $("statusText").textContent = text;
+      const dot = $("statusDot");
+      const color = {
+        idle: "rgba(255,255,255,.35)",
+        ok: "rgba(65,211,138,1)",
+        warn: "rgba(255,255,255,.55)",
+        bad: "rgba(255,93,93,1)"
+      }[kind] || "rgba(255,255,255,.35)";
+      dot.style.background = color;
+    }
+
+    function showView(view) {
+      $("setupView").style.display = (view === "setup") ? "" : "none";
+      $("liveView").style.display  = (view === "live")  ? "" : "none";
+      $("resultView").style.display= (view === "result")? "" : "none";
+      $("leftTitle").textContent = view === "setup" ? "Setup" : (view === "result" ? "Match Result" : "Live");
+      $("leftSub").textContent = view === "setup"
+        ? "Name players, choose who starts, then Start match"
+        : (view === "result" ? "Final score saved in match history" : "Live score updates instantly for watchers");
+    }
+
+    function clampName(s, fallback) {
+      const t = (s || "").trim();
+      return t.length ? t.slice(0,22) : fallback;
+    }
+
+    /*******
+     * Firebase (Realtime Database)
+     *******/
+    const firebaseConfig = {
+      apiKey: "AIzaSyD221i61Z824UbXSLRT-UZs7w60KNzh5nY",
+      authDomain: "ttfl-live-score.firebaseapp.com",
+      databaseURL: "https://ttfl-live-score-default-rtdb.firebaseio.com",
+      projectId: "ttfl-live-score",
+      storageBucket: "ttfl-live-score.firebasestorage.app",
+      messagingSenderId: "698939580201",
+      appId: "1:698939580201:web:80540510de083f676ce138"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    let uid = null;
+
+    const roomId = roomParam.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0,30) || "table1";
+    localStorage.setItem("ttfl_room", roomId);
+
+    const roomRef = db.ref(`rooms/${roomId}`);
+    const presenceRef = db.ref(`rooms/${roomId}/presence`);
+    const chatRef = db.ref(`rooms/${roomId}/chat`);
+
+    let currentMatchId = null;
+    let matchOff = null;
+
+    const state = {
+      role: roleParam === "scorer" ? "scorer" : "watch",
+      match: null,
+      undoStack: [],
+      lastScoreA: null,
+      lastScoreB: null,
+      lastGameWonEventAt: 0,
+      timerTick: null
+    };
+
+    /*******
+     * UI init
+     *******/
+    $("roleBadge").textContent = state.role;
+    $("modeText").textContent = state.role;
+    $("roomText").textContent = roomId;
+    $("roomInput").value = roomId;
+
+    function buildLink(role, room) {
+      const u = new window.URL(window.location.href);
+      u.searchParams.set("role", role);
+      u.searchParams.set("room", room);
+      u.searchParams.set("v", "1");
+      return u.origin + u.pathname + "?" + u.searchParams.toString();
+    }
+    function refreshShareLinks() {
+      const room = ($("roomInput").value || "table1").trim().toLowerCase().replace(/[^a-z0-9_-]/g,"").slice(0,30) || "table1";
+      $("shareWatch").value = buildLink("watch", room);
+      $("shareScorer").value = buildLink("scorer", room);
+    }
+    refreshShareLinks();
+    $("roomInput").addEventListener("input", refreshShareLinks);
+
+    async function copyToClipboard(val) {
+      try {
+        await navigator.clipboard.writeText(val);
+        toast("Copied");
+      } catch {
+        toast("Copy failed", "Tap and copy manually.");
+      }
+    }
+    $("copyWatch").addEventListener("click", () => copyToClipboard($("shareWatch").value));
+    $("copyScorer").addEventListener("click", () => copyToClipboard($("shareScorer").value));
+
+    function refreshTossOptions() {
+      const a = clampName($("nameA").value, "First player");
+      const b = clampName($("nameB").value, "Second player");
+      const tw = $("tossWinner");
+      const was = tw.value;
+      tw.innerHTML = `<option value="A">${a}</option><option value="B">${b}</option>`;
+      tw.value = (was === "B") ? "B" : "A";
+    }
+    $("nameA").addEventListener("input", refreshTossOptions);
+    $("nameB").addEventListener("input", refreshTossOptions);
+    refreshTossOptions();
+
+    $("watchBtn").addEventListener("click", () => {
+      state.role = "watch";
+      $("roleBadge").textContent = state.role;
+      $("modeText").textContent = state.role;
+      $("scorerControls").style.display = "none";
+      toast("Watch mode enabled");
+      showView("live");
+      updatePresenceRole();
+    });
+
+    /*******
+     * Helpers
+     *******/
+    function setsToWin(bestOf) { return Math.ceil(Number(bestOf) / 2); }
+
+    function isGameWon(a, b, ptsToWin) {
+      const win = Number(ptsToWin);
+      if (a >= win || b >= win) {
+        return Math.abs(a - b) >= 2;
+      }
+      return false;
+    }
+
+    function isDeuce(match){
+      const a = match.scoreA, b = match.scoreB;
+      const threshold = match.pointsToWin - 1;
+      return a >= threshold && b >= threshold;
+    }
+
+    // Server: every 2 points; deuce every 1; start server flips each game automatically
+    function computeServer(match) {
+      const total = match.scoreA + match.scoreB;
+      const interval = isDeuce(match) ? 1 : 2;
+      const flips = Math.floor(total / interval);
+      const start = match.gameStartServer || match.tossWinner || "A";
+      return (flips % 2 === 0) ? start : (start === "A" ? "B" : "A");
+    }
+
+    function fmtDuration(sec){
+      sec = Math.max(0, Math.floor(sec||0));
+      const h = String(Math.floor(sec/3600)).padStart(2,"0");
+      const m = String(Math.floor((sec%3600)/60)).padStart(2,"0");
+      const s = String(sec%60).padStart(2,"0");
+      return `${h}:${m}:${s}`;
+    }
+
+    function renderTimeoutTimer(match){
+      const timer = $("timeoutTimer");
+      const fill = $("timerFill");
+      const ttext = $("timerText");
+
+      if (!match || !match.timeout || !match.timeout.active) {
+        timer.style.display = "none";
+        return;
+      }
+      const endsAt = match.timeout.active.endsAt;
+      const now = Date.now();
+      const remainMs = Math.max(0, endsAt - now);
+      const remain = Math.ceil(remainMs/1000);
+      ttext.textContent = String(remain);
+
+      timer.style.display = "";
+      const frac = Math.max(0, Math.min(1, remainMs / 60000));
+      fill.style.transform = `scaleX(${frac})`;
+
+      if (remainMs <= 0){
+        timer.style.display = "none";
+      }
+    }
+
+        function fmtHMS(sec){
+      const s = Math.max(0, Math.floor(sec||0));
+      const hh = String(Math.floor(s/3600)).padStart(2,"0");
+      const mm = String(Math.floor((s%3600)/60)).padStart(2,"0");
+      const ss = String(s%60).padStart(2,"0");
+      return `${hh}:${mm}:${ss}`;
+    }
+
+    function renderLive(match) {
+      if (!match) return;
+
+      $("matchTitle").textContent = `${match.nameA} vs ${match.nameB}`;
+      $("matchMeta").textContent = `Game ${match.gameIndex} • Best of ${match.bestOf}`;
+
+      $("liveNameA").textContent = match.nameA;
+      $("liveNameB").textContent = match.nameB;
+
+      // Match score (sets)
+      $("matchScoreText").textContent = `${match.setsA ?? 0} – ${match.setsB ?? 0}`;
+
+      // Scores + animate changes
+      const a = match.scoreA, b = match.scoreB;
+      const scoreAEl = $("scoreA"), scoreBEl = $("scoreB");
+
+      if (state.lastScoreA !== null && state.lastScoreA !== a){
+        scoreAEl.classList.remove("pop"); void scoreAEl.offsetWidth; scoreAEl.classList.add("pop");
+      }
+      if (state.lastScoreB !== null && state.lastScoreB !== b){
+        scoreBEl.classList.remove("pop"); void scoreBEl.offsetWidth; scoreBEl.classList.add("pop");
+      }
+      state.lastScoreA = a; state.lastScoreB = b;
+
+      scoreAEl.textContent = a;
+      scoreBEl.textContent = b;
+
+      // Serve dot (TT rules)
+      const srv = computeServer(match);
+      $("serveA").style.display = srv === "A" ? "" : "none";
+      $("serveB").style.display = srv === "B" ? "" : "none";
+
+      // Timeout used labels
+      $("timeoutA").style.display = (match.timeout && match.timeout.usedA) ? "" : "none";
+      $("timeoutB").style.display = (match.timeout && match.timeout.usedB) ? "" : "none";
+
+      // Deuce + ADV
+      const deuce = isDeuce(match) && (match.scoreA === match.scoreB);
+      $("deuceBanner").style.display = deuce ? "" : "none";
+
+      const advA = isDeuce(match) && (match.scoreA - match.scoreB === 1);
+      const advB = isDeuce(match) && (match.scoreB - match.scoreA === 1);
+      $("advA").style.display = advA ? "" : "none";
+      $("advB").style.display = advB ? "" : "none";
+
+      // Game history (11 | 6 ... (00:20:12)) with duration right-aligned
+      const list = $("setList");
+      list.innerHTML = "";
+      const sets = Array.isArray(match.sets) ? match.sets : [];
+      sets.forEach((s) => {
+        const el = document.createElement("div");
+        el.className = "setItem";
+        const dur = (s.durationSec != null) ? `(${fmtHMS(s.durationSec)})` : "";
+        el.innerHTML = `
+          <div class="histScores">
+            <span class="histA">${s.a}</span>
+            <span class="histBar">|</span>
+            <span class="histB">${s.b}</span>
+          </div>
+          <div class="histTime">${dur}</div>
+        `;
+        list.appendChild(el);
+      });
+
+      if (!sets.length) {
+        const el = document.createElement("div");
+        el.className = "setItem";
+        el.style.opacity = ".65";
+        el.textContent = "No games finished yet";
+        list.appendChild(el);
+      }
+    }
+      if (state.lastScoreB !== null && state.lastScoreB !== b){
+        scoreBEl.classList.remove("pop"); void scoreBEl.offsetWidth; scoreBEl.classList.add("pop");
+      }
+      state.lastScoreA = a; state.lastScoreB = b;
+
+      scoreAEl.textContent = a;
+      scoreBEl.textContent = b;
+
+      // match score shown below points
+      $("matchScoreA").textContent = `${match.setsA} - ${match.setsB}`;
+      $("matchScoreB").textContent = `${match.setsA} - ${match.setsB}`;
+
+      // timeout used tag
+      $("timeoutA").textContent = (match.timeout && match.timeout.usedA) ? "T" : "";
+      $("timeoutB").textContent = (match.timeout && match.timeout.usedB) ? "T" : "";
+
+      // Serve dot
+      const srv = computeServer(match);
+      $("serveA").style.display = (srv === "A") ? "" : "none";
+      $("serveB").style.display = (srv === "B") ? "" : "none";
+
+      // Deuce + ADV
+      const banner = $("deuceBanner");
+      if (isDeuce(match) && match.scoreA === match.scoreB){
+        banner.classList.add("on");
+        banner.textContent = "DEUCE";
+      } else if (isDeuce(match) && Math.abs(match.scoreA - match.scoreB) === 1){
+        banner.classList.add("on");
+        const leader = match.scoreA > match.scoreB ? "A" : "B";
+        banner.textContent = (leader === "A") ? `ADV • ${match.nameA}` : `ADV • ${match.nameB}`;
+      } else {
+        banner.classList.remove("on");
+      }
+
+      // History
+      const list = $("setList");
+      list.innerHTML = "";
+      const sets = match.sets || [];
+      sets.forEach((s) => {
+        const el = document.createElement("div");
+        el.className = "setItem";
+        el.innerHTML = `
+          <div class="setLeft">
+            <span class="chipA">${s.a}</span>
+            <span class="pipe">|</span>
+            <span class="chipB">${s.b}</span>
+          </div>
+          <div class="dur">(${fmtDuration(s.durationSec || 0)})</div>
+        `;
+        list.appendChild(el);
+      });
+      if (!sets.length){
+        const el = document.createElement("div");
+        el.className = "setItem";
+        el.style.opacity = ".65";
+        el.textContent = "No games finished yet";
+        list.appendChild(el);
+      }
+
+      // Timeout timer
+      renderTimeoutTimer(match);
+
+      // Game-won overlay (event)
+      if (match.lastEvent && match.lastEvent.type === "gameWon" && match.lastEvent.at && match.lastEvent.at > state.lastGameWonEventAt){
+        state.lastGameWonEventAt = match.lastEvent.at;
+        const overlay = $("winOverlay");
+        const title = $("winTitle");
+        const sub = $("winSub");
+        title.textContent = `Game Won — ${match.lastEvent.winnerName || "Player"}`;
+        sub.textContent = "Next game starting…";
+        overlay.classList.add("on");
+        setTimeout(() => overlay.classList.remove("on"), 2200);
+      }
+    }
+
+    function renderResult(match) {
+      $("finalSetsA").textContent = match.setsA;
+      $("finalSetsB").textContent = match.setsB;
+
+      const list = $("finalSetList");
+      list.innerHTML = "";
+      const sets = match.sets || [];
+      sets.forEach((s) => {
+        const el = document.createElement("div");
+        el.className = "setItem";
+        el.innerHTML = `
+          <div class="setLeft">
+            <span class="chipA">${s.a}</span>
+            <span class="pipe">|</span>
+            <span class="chipB">${s.b}</span>
+          </div>
+          <div class="dur">(${fmtDuration(s.durationSec || 0)})</div>
+        `;
+        list.appendChild(el);
+      });
+    }
+
+    function canScoreThisMatch(match) {
+      return state.role === "scorer" && match && match.ownerUid && match.ownerUid === uid;
+    }
+
+    /*******
+     * Presence (watcher count)
+     *******/
+    function updatePresenceRole(){
+      if (!uid) return;
+      const myRef = presenceRef.child(uid);
+      myRef.update({
+        role: state.role,
+        lastSeen: firebase.database.ServerValue.TIMESTAMP
+      });
+    }
+
+    function startPresence(){
+      if (!uid) return;
+      const myRef = presenceRef.child(uid);
+      myRef.onDisconnect().remove();
+      updatePresenceRole();
+      setInterval(() => updatePresenceRole(), 12000);
+    }
+
+    presenceRef.on("value", (snap) => {
+      const obj = snap.val() || {};
+      let watchers = 0;
+      Object.values(obj).forEach(v => { if (v && v.role === "watch") watchers += 1; });
+      const base = ($("statusText").textContent || "Connected");
+      if (base.toLowerCase().includes("connected")){
+        $("statusText").textContent = `Connected • ${watchers} Watchers`;
+      }
+    });
+
+    /*******
+     * Chat
+     *******/
+    function fmtTime(ts){
+      try{
+        const d = new Date(ts);
+        const hh = d.getHours();
+        const mm = String(d.getMinutes()).padStart(2,"0");
+        return `${hh}:${mm}`;
+      }catch{ return ""; }
+    }
+    function renderChat(list){
+      const el = $("chatList");
+      el.innerHTML = "";
+      list.forEach(m => {
+        const row = document.createElement("div");
+        row.className = "chatMsg";
+        row.innerHTML = `<b>${m.name || "Guest"}</b>: ${m.text || ""}<small>${fmtTime(m.ts || Date.now())}</small>`;
+        el.appendChild(row);
+      });
+      el.scrollTop = el.scrollHeight;
+    }
+    chatRef.limitToLast(80).on("value", (snap) => {
+      const v = snap.val() || {};
+      const msgs = Object.values(v).sort((a,b) => (a.ts||0)-(b.ts||0));
+      renderChat(msgs);
+      $("chatStatus").textContent = `${msgs.length} msgs`;
+    });
+
+    function sendChat(){
+      const name = ( ($("chatName").value || localStorage.getItem("ttfl_chat_name") || "Guest") ).trim().slice(0,18) || "Guest";
+      const text = ($("chatText").value || "").trim();
+      if (!text) return;
+      localStorage.setItem("ttfl_chat_name", name);
+      $("chatName").value = name;
+      $("chatText").value = "";
+      const msg = { name, text, ts: Date.now(), uid: uid || null, role: state.role };
+      chatRef.push(msg).catch(() => toast("Chat failed"));
+    }
+    $("chatSend").addEventListener("click", sendChat);
+    $("chatText").addEventListener("keydown", (e) => { if (e.key === "Enter") sendChat(); });
+
+    /*******
+     * Subscribe room -> match
+     *******/
+        /*******
+     * Timeout + broadcast overlays
+     *******/
+    function showOverlay(text){
+      const ov = $("centerOverlay");
+      const box = $("overlayText");
+      if (!ov || !box) return;
+      box.textContent = text;
+      ov.classList.add("show");
+      setTimeout(() => ov.classList.remove("show"), 2400);
+    }
+
+    function updateTimeoutUI(match){
+      const t = (match && match.timeout) ? match.timeout : {};
+      const active = !!(t.active && t.active.endsAt && Date.now() < t.active.endsAt);
+      const banner = $("timeoutBanner");
+      const clock = $("timeoutClock");
+
+      // timeout buttons state (scorer only)
+      const canScore = canScoreThisMatch(match);
+      const btnA = $("timeoutBtnA"), btnB = $("timeoutBtnB");
+      if (btnA && btnB){
+        btnA.disabled = !canScore || !!t.usedA || active;
+        btnB.disabled = !canScore || !!t.usedB || active;
+      }
+
+      if (!banner || !clock) return;
+
+      if (!active){
+        banner.style.display = "none";
+        if (state.timerTick){ clearInterval(state.timerTick); state.timerTick = null; }
+        // If scorer owns match and timeout is marked active but expired, clear it in DB
+        if (canScore && t.active && t.active.endsAt && Date.now() >= t.active.endsAt){
+          const matchRef = db.ref(`matches/${currentMatchId}`);
+          matchRef.transaction(cur => {
+            if (!cur || cur.ownerUid !== uid) return cur;
+            if (cur.timeout && cur.timeout.active && cur.timeout.active.endsAt && Date.now() >= cur.timeout.active.endsAt){
+              cur.timeout.active = null;
+            }
+            return cur;
+          });
+        }
+        return;
+      }
+
+      banner.style.display = "";
+      const tick = () => {
+        const leftMs = Math.max(0, t.active.endsAt - Date.now());
+        const leftSec = Math.ceil(leftMs/1000);
+        const mm = String(Math.floor(leftSec/60)).padStart(2,"0");
+        const ss = String(leftSec%60).padStart(2,"0");
+        clock.textContent = `${mm}:${ss}`;
+      };
+      tick();
+      if (!state.timerTick){
+        state.timerTick = setInterval(tick, 200);
+      }
+    }
+
+function subscribeMatch(matchId) {
+      if (!matchId) return;
+      if (matchOff) { matchOff(); matchOff = null; }
+
+      const matchRef = db.ref(`matches/${matchId}`);
+      const handler = (snap) => {
+        const m = snap.val();
+        if (!m) return;
+
+        state.match = m;
+
+        // If another scorer owns it, force watch mode
+        if (state.role === "scorer" && uid && m.ownerUid && m.ownerUid !== uid) {
+          state.role = "watch";
+          $("roleBadge").textContent = state.role;
+          $("modeText").textContent = state.role;
+          $("scorerControls").style.display = "none";
+          toast("Another scorer owns this match.", "You are in watch mode.");
+          updatePresenceRole();
+        }
+
+        if (m.status === "ended") {
+          showView("result");
+          renderResult(m);
+        } else if (m.status === "cancelled") {
+          showView("setup");
+        } else {
+          showView("live");
+          renderLive(m);
+        }
+
+        // Timeout banner + button states
+        updateTimeoutUI(m);
+
+        // Game-won overlay (broadcast to watchers)
+        if (m.lastEvent && m.lastEvent.type === "gameWon" && m.lastEvent.at && m.lastEvent.at > state.lastGameWonEventAt){
+          state.lastGameWonEventAt = m.lastEvent.at;
+          showOverlay(`Game Won – ${m.lastEvent.winnerName || (m.lastEvent.winner === "A" ? m.nameA : m.nameB)}`);
+        }
+
+        $("scorerControls").style.display = canScoreThisMatch(m) ? "" : "none";
+      };
+
+      matchRef.on("value", handler);
+      matchOff = () => matchRef.off("value", handler);
+    }
+
+    roomRef.on("value", (snap) => {
+      const room = snap.val();
+
+      if (!room || !room.currentMatchId) {
+        currentMatchId = null;
+        showView("setup");
+        return;
+      }
+      if (room.currentMatchId !== currentMatchId) {
+        currentMatchId = room.currentMatchId;
+        subscribeMatch(currentMatchId);
+      }
+    });
+
+    /*******
+     * Auth + connect
+     *******/
+    setStatus("Connecting...", "warn");
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        uid = user.uid;
+        setStatus("Connected", "ok");
+        startPresence();
+      }
+    });
+
+    auth.signInAnonymously().catch((e) => {
+      console.error(e);
+      setStatus("Auth failed", "bad");
+      toast("Auth failed", "Enable Anonymous Auth in Firebase.");
+    });
+
+    /*******
+     * Start match (scorer)
+     *******/
+    $("startBtn").addEventListener("click", async () => {
+      state.role = "scorer";
+      $("roleBadge").textContent = state.role;
+      $("modeText").textContent = state.role;
+      updatePresenceRole();
+
+      const pin = ($("pin").value || "").trim();
+      if (!pin) { toast("Enter scorer PIN"); return; }
+
+      const nameA = clampName($("nameA").value, "First player");
+      const nameB = clampName($("nameB").value, "Second player");
+      const tossWinner = $("tossWinner").value === "B" ? "B" : "A";
+      const bestOf = Number($("bestOf").value || 5);
+      const pointsToWin = Number($("pointsToWin").value || 11);
+
+      const matchId = `m_${Date.now()}_${Math.random().toString(16).slice(2,8)}`;
+
+      const now = Date.now();
+      const match = {
+        matchId,
+        roomId,
+        ownerUid: uid,
+        pinHash: btoa(pin).slice(0,16),
+        nameA, nameB,
+        bestOf,
+        pointsToWin,
+        tossWinner,
+        gameStartServer: tossWinner, // starting server for current game
+        scoreA: 0,
+        scoreB: 0,
+        sets: [],
+        setsA: 0,
+        setsB: 0,
+        gameIndex: 1,
+        status: "live",
+        startedAt: now,
+        gameStartedAt: now,
+        timeout: { usedA:false, usedB:false, active:null },
+        lastEvent: null,
+        createdAt: now,
+        updatedAt: now
+      };
+
+      try {
+        await db.ref(`matches/${matchId}`).set(match);
+        await roomRef.update({ currentMatchId: matchId, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+        state.undoStack = [];
+        toast("Match started");
+      } catch (e) {
+        console.error(e);
+        setStatus("Permission denied", "bad");
+        toast("PERMISSION_DENIED", "Check Rules + Anonymous Auth.");
+      }
+    });
+
+    /*******
+     * Scoring actions (owner only) + game auto reset + start server flips after each game
+     *******/
+    function pushUndo(snapshot) {
+      state.undoStack.push(snapshot);
+      if (state.undoStack.length > 25) state.undoStack.shift();
+    }
+
+    function updateMatchAtomic(fn){
+      const m = state.match;
+      if (!m || !currentMatchId) return Promise.resolve();
+
+      const matchRef = db.ref(`matches/${currentMatchId}`);
+      return matchRef.transaction((cur) => {
+        if (!cur) return cur;
+        if (cur.ownerUid !== uid) return cur;
+        const next = fn(JSON.parse(JSON.stringify(cur)));
+        next.updatedAt = Date.now();
+        return next;
+      });
+    }
+
+    function gameDurationSec(cur){
+      const now = Date.now();
+      return Math.max(0, Math.round((now - (cur.gameStartedAt || now)) / 1000));
+    }
+
+    async function addPoint(which) {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer for this match"); return; }
+
+      pushUndo({ ...m });
+
+      await updateMatchAtomic((cur) => {
+        if (cur.status !== "live") return cur;
+
+        if (which === "A") cur.scoreA += 1;
+        else cur.scoreB += 1;
+
+        if (isGameWon(cur.scoreA, cur.scoreB, cur.pointsToWin)) {
+          // record finished game
+          cur.sets = cur.sets || [];
+          cur.sets.push({ a: cur.scoreA, b: cur.scoreB, durationSec: gameDurationSec(cur) });
+
+          // sets won
+          let winner = "A";
+          if (cur.scoreA > cur.scoreB) cur.setsA += 1;
+          else { cur.setsB += 1; winner = "B"; }
+
+          // game won event for overlay
+          cur.lastEvent = {
+            type: "gameWon",
+            winner,
+            winnerName: winner === "A" ? cur.nameA : cur.nameB,
+            at: Date.now()
+          };
+
+          // flip starting server for next game (alternate each game)
+          cur.gameStartServer = (cur.gameStartServer === "A") ? "B" : "A";
+
+          // reset points + timers for next game
+          cur.scoreA = 0;
+          cur.scoreB = 0;
+          cur.gameIndex = (cur.sets.length + 1);
+          cur.gameStartedAt = Date.now();
+
+          const need = setsToWin(cur.bestOf);
+          if (cur.setsA >= need || cur.setsB >= need) {
+            cur.status = "ended";
+          }
+        }
+
+        return cur;
+      }).catch((e) => {
+        console.error(e);
+        toast("Update failed", "Permission or connectivity issue.");
+      });
+    }
+
+    $("ptA").addEventListener("click", () => addPoint("A"));
+    $("ptB").addEventListener("click", () => addPoint("B"));
+
+    // Timeouts (1 per player per match)
+    async function takeTimeout(player){
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer for this match"); return; }
+      await updateMatchAtomic((cur) => {
+        if (cur.status !== "live") return cur;
+        cur.timeout = cur.timeout || { usedA:false, usedB:false, active:null };
+
+        // already active?
+        if (cur.timeout.active && cur.timeout.active.endsAt && Date.now() < cur.timeout.active.endsAt) return cur;
+
+        if (player === "A"){
+          if (cur.timeout.usedA) return cur;
+          cur.timeout.usedA = true;
+        } else {
+          if (cur.timeout.usedB) return cur;
+          cur.timeout.usedB = true;
+        }
+
+        cur.timeout.active = {
+          player,
+          startedAt: Date.now(),
+          endsAt: Date.now() + 60000
+        };
+        return cur;
+      });
+      toast("Timeout", "60 seconds started");
+    }
+    const tA = $("timeoutBtnA"), tB = $("timeoutBtnB");
+    if (tA) tA.addEventListener("click", () => takeTimeout("A"));
+    if (tB) tB.addEventListener("click", () => takeTimeout("B"));
+
+
+    $("undoBtn").addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+      const prev = state.undoStack.pop();
+      if (!prev) { toast("Nothing to undo"); return; }
+
+      try {
+        await db.ref(`matches/${currentMatchId}`).set({ ...prev, updatedAt: Date.now() });
+        toast("Undone");
+      } catch (e) {
+        console.error(e);
+        toast("Undo failed");
+      }
+    });
+
+    $("swapServeBtn").addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+
+      pushUndo({ ...m });
+
+      await updateMatchAtomic((cur) => {
+        cur.gameStartServer = (cur.gameStartServer === "A") ? "B" : "A";
+        return cur;
+      });
+      toast("Serve swapped");
+    });
+
+    // Timeout buttons (1 per player per match) + 60s timer visible for everyone
+    function startTimeout(by){
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+
+      updateMatchAtomic((cur) => {
+        cur.timeout = cur.timeout || { usedA:false, usedB:false, active:null };
+        if (cur.timeout.active) return cur; // already running
+        if (by === "A" && cur.timeout.usedA) return cur;
+        if (by === "B" && cur.timeout.usedB) return cur;
+
+        if (by === "A") cur.timeout.usedA = true;
+        else cur.timeout.usedB = true;
+
+        cur.timeout.active = { by, startedAt: Date.now(), endsAt: Date.now() + 60000 };
+        return cur;
+      }).then(() => toast("Timeout started"));
+    }
+
+    $("timeoutABtn").addEventListener("click", () => startTimeout("A"));
+    $("timeoutBBtn").addEventListener("click", () => startTimeout("B"));
+
+    // Auto-expire timeout (scorer cleans up so watchers sync)
+    setInterval(() => {
+      const m = state.match;
+      if (!m || !m.timeout || !m.timeout.active) return;
+      if (!canScoreThisMatch(m)) return;
+      if (Date.now() >= m.timeout.active.endsAt){
+        updateMatchAtomic((cur) => {
+          if (cur.timeout) cur.timeout.active = null;
+          return cur;
+        });
+      }
+    }, 900);
+
+    $("endMatchBtn").addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+
+      await updateMatchAtomic((cur) => {
+        const now = Date.now();
+        cur.status = "ended";
+        cur.endedAt = now;
+        cur.totalDurationSec = Math.floor((now - (cur.startedAt || now)) / 1000);
+        if (cur.timeout && cur.timeout.active) cur.timeout.active = null;
+        return cur;
+      });
+      toast("Match ended");
+    });
+      toast("Match ended");
+    });
+
+    $("newMatchBtn").addEventListener("click", async () => {
+      showView("setup");
+      toast("Ready for new match");
+      // Clear room so all watchers return to setup
+      try{
+        if (canScoreThisMatch(state.match)){
+          await roomRef.update({ currentMatchId: null, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+        }
+      }catch(e){ console.error(e); }
+    });
+
+    $("resultNewMatchBtn").addEventListener("click", async () => {
+      showView("setup");
+      toast("Start a new match");
+      try{
+        if (canScoreThisMatch(state.match)){
+          await roomRef.update({ currentMatchId: null, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+        }
+      }catch(e){ console.error(e); }
+    });
+    $("backToLiveBtn").addEventListener("click", () => {
+      if (state.match && state.match.status !== "ended") showView("live");
+      else showView("setup");
+    });
+
+        // Cancel / Restart / Back (broadcast to watchers)
+    const cancelBtn = $("cancelMatchBtn");
+    if (cancelBtn) cancelBtn.addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+      try{
+        await updateMatchAtomic((cur) => {
+          cur.status = "cancelled";
+          cur.cancelledAt = Date.now();
+          return cur;
+        });
+        await roomRef.update({ currentMatchId: null, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+        showView("setup");
+        toast("Match cancelled");
+      }catch(e){ console.error(e); toast("Cancel failed"); }
+    });
+
+    const restartBtn = $("restartMatchBtn");
+    if (restartBtn) restartBtn.addEventListener("click", async () => {
+      const m = state.match;
+      if (!canScoreThisMatch(m)) { toast("Not scorer"); return; }
+      try{
+        await updateMatchAtomic((cur) => {
+          const now = Date.now();
+          cur.status = "live";
+          cur.scoreA = 0; cur.scoreB = 0;
+          cur.sets = [];
+          cur.setsA = 0; cur.setsB = 0;
+          cur.gameIndex = 1;
+          cur.startedAt = now;
+          cur.gameStartedAt = now;
+          cur.gameStartServer = cur.tossWinner || "A";
+          cur.endedAt = null;
+          cur.totalDurationSec = null;
+          cur.timeout = { usedA:false, usedB:false, active:null };
+          cur.lastEvent = { type:"restart", at: now };
+          return cur;
+        });
+        toast("Match restarted");
+      }catch(e){ console.error(e); toast("Restart failed"); }
+    });
+
+    const backSetup = $("backToSetupBtn");
+    if (backSetup) backSetup.addEventListener("click", () => {
+      showView("setup");
+      toast("Back to setup");
+    });
+
+/*******
+     * Download Scorecard (includes names above final scores already in UI)
+     *******/
+    async function downloadScorecard() {
+      const panel = $("mainPanel");
+      toast("Preparing download...");
+      try {
+        const canvas = window.html2canvas(panel, {
+          backgroundColor: null,
+          scale: 2,
+          useCORS: true
+        });
+        const c = await canvas;
+        const dataUrl = c.toDataURL("image/png");
+
+        const a = document.createElement("a");
+        const ts = new Date().toISOString().replace(/[:.]/g,"-");
+        a.download = `TTFL-scorecard-${roomId}-${ts}.png`;
+        a.href = dataUrl;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        toast("Downloaded", "Scorecard saved as image.");
+      } catch (e) {
+        console.error(e);
+        toast("Download failed", "Try Safari (best on iPhone).");
+      }
+    }
+    $("downloadBtn").addEventListener("click", downloadScorecard);
+
+    /*******
+     * Initial screen behavior
+     *******/
+    if (state.role === "watch") {
+      showView("live");
+    } else {
+      showView("setup");
+    }
+
+    // Landscape: hide right panel for clean scoring view
+    function applyLandscape(){
+      const isLand = window.matchMedia("(orientation: landscape)").matches;
+      const rightPanel = document.querySelector(".grid > .panel:last-child");
+      if (rightPanel){
+        rightPanel.style.display = isLand ? "none" : "";
+      }
+    }
+    window.addEventListener("resize", applyLandscape);
+    applyLandscape();
+
+  
+})();
+  </script>
+</body>
+</html>
