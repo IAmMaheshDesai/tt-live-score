@@ -690,7 +690,7 @@
 
             <!-- Match summary (always visible) -->
             <div id="matchSummary" aria-label="Match summary">
-              <div class="bestOfBadge" id="bestOfBadge">BEST OF 5</div>
+              <!-- <div class="bestOfBadge" id="bestOfBadge">BEST OF 5</div> -->
               <div class="matchScoreLine" id="matchScoreLine">
                 <span class="msLabel">MATCH</span>
                 <span class="msVal"><span id="matchA">0</span><span class="msDash">–</span><span id="matchB">0</span></span>
@@ -1249,7 +1249,7 @@ let uid = null;
       const msa = Number(match.setsA || 0), msb = Number(match.setsB || 0);
       $("matchA").textContent = msa;
       $("matchB").textContent = msb;
-      $("bestOfBadge").textContent = `BEST OF ${match.bestOf || 5}`;
+      //$("bestOfBadge").textContent = `BEST OF ${match.bestOf || 5}`;
 
       // Animate match score when it changes
       try{
