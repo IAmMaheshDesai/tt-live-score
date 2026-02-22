@@ -61,12 +61,15 @@
       gap:12px;
       padding: 10px 10px 14px;
     }
-    .brand{
-      display:flex; align-items:center; gap:10px;
-      font-weight: 800;
-      letter-spacing:.2px;
-      font-size:16px;
-    }
+   .brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight: 600;          /* lighter weight */
+  letter-spacing:.2px;
+  font-size: 13px;           /* match sub text size */
+  color: rgba(255,255,255,.75);
+}
     .dot{
       width:10px;height:10px;border-radius:99px;background:rgba(255,255,255,.35);
       box-shadow: 0 0 0 4px rgba(255,255,255,.06);
@@ -755,7 +758,15 @@
   <!-- html2canvas for download -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
-  <script type="module">
+  
+  <!-- Firebase (compat builds for maximum browser reliability; avoids module import/CORS issues) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+  <script>
+(async () => {
+
 
     /*******
      * 0) URL + params
@@ -902,15 +913,11 @@
       appId: "1:698939580201:web:80540510de083f676ce138"
     };
 
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import { getDatabase, ref, get, set, update, onValue, off, serverTimestamp, runTransaction, onDisconnect, push, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-    import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const auth = getAuth(app);
 
-    let uid = null;
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();let uid = null;
 
     /*******
      * 3) Data model
@@ -918,12 +925,12 @@
     const roomId = roomParam.toLowerCase().replace(/[^a-z0-9_-]/g, "").slice(0,30) || "table1";
     localStorage.setItem("ttfl_room", roomId);
 
-    const roomRef = ref(db, `rooms/${roomId}`);
-    const presenceRef = ref(db, `rooms/${roomId}/presence`);
+    const roomRef = db.ref(`rooms/${roomId}`);
+    const presenceRef = db.ref(`rooms/${roomId}/presence`);
     let presenceUid = null;
     let presenceHeartbeat = null;
 
-    const chatRef = ref(db, `rooms/${roomId}/chat`);
+    const chatRef = db.ref(`rooms/${roomId}/chat`);
     const chatMsgsEl = $("chatMsgs");
     const chatNameEl = $("chatName");
     const chatInputEl = $("chatInput");
@@ -944,7 +951,7 @@
       });
 
       const q = query(chatRef, limitToLast(50));
-      onValue(q, (snap) => {
+      q.on("value", (snap) => {
         const val = snap.val() || {};
         const arr = Object.entries(val).map(([k,v]) => ({...v, _k:k})).sort((a,b)=>(a.ts||0)-(b.ts||0));
         chatMsgsEl.innerHTML = "";
@@ -977,7 +984,7 @@
 
     function setupPresence(uid) {
       presenceUid = uid;
-      const myRef = ref(db, `rooms/${roomId}/presence/${uid}`);
+      const myRef = db.ref(`rooms/${roomId}/presence/${uid}`);
       // best-effort presence; onDisconnect works only when page is open
       set(myRef, {
         role: state.role,
@@ -992,7 +999,7 @@
       }, 20000);
 
       // watcher count listener (exclude scorer)
-      onValue(presenceRef, (snap) => {
+      presenceRef.on("value", (snap) => {
         const val = snap.val() || {};
         let w = 0;
         Object.values(val).forEach(v => {
@@ -1040,9 +1047,9 @@
     // Links
     function buildLink(role, room) {
       const u = new window.URL(window.location.href);
-      u.searchParams.set("role", role);
-      u.searchParams.set("room", room);
-      u.searchParams.set("v", "1");
+      u.searchParams."role".set(role);
+      u.searchParams."room".set(room);
+      u.searchParams."v".set("1");
       return u.origin + u.pathname + "?" + u.searchParams.toString();
     }
     function refreshShareLinks() {
@@ -1257,7 +1264,7 @@
       if (!matchId) return;
       if (currentMatchUnsub) { currentMatchUnsub(); currentMatchUnsub = null; }
 
-      const matchRef = ref(db, `matches/${matchId}`);
+      const matchRef = db.ref(`matches/${matchId}`);
       const handler = (snap) => {
         const m = snap.val();
         if (!m) return;
@@ -1285,7 +1292,7 @@
       };
 
       onValue(matchRef, handler);
-      currentMatchUnsub = () => off(matchRef, "value", handler);
+      currentMatchUnsub = () => matchRef.off("value", handler);
     }
 
     function applyRoomSnapshot(room){
@@ -1321,7 +1328,7 @@
      *******/
     setStatus("Connecting...", "warn");
 
-    onAuthStateChanged(auth, (user) => {
+    auth.onAuthStateChanged((user) => {
       if (user) {
         uid = user.uid;
         state.uid = uid;
@@ -1332,7 +1339,7 @@
     });
 
     try {
-      await signInAnonymously(auth);
+      await auth.signInAnonymously();
       setStatus("Connected", "ok");
     } catch (e) {
       setStatus("Auth failed", "bad");
@@ -1345,7 +1352,7 @@
      *******/
     async function setRoomStatusPatch(patch){
       try{
-        await update(roomRef, { ...patch, updatedAt: serverTimestamp() });
+        await roomRef.{ ...patch.update(updatedAt: firebase.database.ServerValue.TIMESTAMP });
       }catch(e){
         console.error(e);
       }
@@ -1398,8 +1405,8 @@
       };
 
       try {
-        await set(ref(db, `matches/${matchId}`), match);
-        await setRoomStatusPatch({ currentMatchId: matchId, status: "live", message: "Match is live" });
+        await db.ref(`matches/${matchId}`).match);
+        await setRoomStatusPatch({ currentMatchId: matchId.set(status: "live", message: "Match is live" });
         state.undoStack = [];
         toast("Match started");
       } catch (e) {
@@ -1414,10 +1421,10 @@
      *******/
     async function updateMatchAtomic(fn) {
       if (!currentMatchId) return;
-      const matchRef = ref(db, `matches/${currentMatchId}`);
+      const matchRef = db.ref(`matches/${currentMatchId}`);
 
       try {
-        await runTransaction(matchRef, (cur) => {
+        await matchRef.transaction((cur) => {
           if (!cur) return cur;
           if (!uid || cur.ownerUid !== uid) return cur; // owner-only
           const next = fn(clone(cur));
@@ -1512,7 +1519,7 @@
       if (!prev) { toast("Nothing to undo"); return; }
 
       try {
-        await set(ref(db, `matches/${currentMatchId}`), { ...prev, updatedAt: Date.now() });
+        await set(db.ref(`matches/${currentMatchId}`), { ...prev, updatedAt: Date.now() });
         toast("Undone");
       } catch (e) {
         console.error(e);
@@ -1650,6 +1657,8 @@
       setStatus("Config missing", "bad");
       toast("Firebase config not pasted", "Paste firebaseConfig (including databaseURL).");
     }
+})();
+
 
   
 </script>
